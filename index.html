@@ -142,6 +142,8 @@ button{font:inherit;color:inherit}
 .tag.skipped{background:var(--cinnabar-soft);color:var(--cinnabar)}
 .end-actions{display:flex;gap:10px;align-items:center;justify-content:space-between;margin-top:18px;flex-wrap:wrap}
 .end-actions small{color:var(--slate)}
+.btns{display:flex;gap:8px;flex-wrap:wrap}
+.end .lead .zh{font-weight:600;color:var(--ink-2)}
 .all-clear{padding:14px;border-radius:12px;background:var(--jade-soft);color:var(--jade);font-weight:600;text-align:center}
 
 /* ---------- settings panel ---------- */
@@ -177,6 +179,7 @@ kbd{font-family:var(--f-ui);font-size:11px;border:1px solid var(--line);border-b
       <span class="count ok"><b id="okCount">0</b> 正解</span>
       <span class="count ng"><b id="ngCount">0</b> 言い直し</span>
       <span class="count pos"><b id="pos">1</b> / <span id="total">0</span></span>
+      <span class="count round" id="round" title="全体の中での位置"></span>
     </div>
     <div class="tools">
       <button class="icon-btn" id="soundBtn" type="button" aria-label="効果音">
@@ -234,13 +237,13 @@ kbd{font-family:var(--f-ui);font-size:11px;border:1px solid var(--line);border-b
 
 <div class="end" id="end" hidden>
   <div class="box">
-    <h2>ひと通り終わりました</h2>
-    <div class="lead">「<span class="zh" lang="zh-Hans">再来一次</span> zài lái yí cì」と言うと、もう一度最初から始まります。</div>
+    <h2 id="endTitle">…</h2>
+    <div class="lead" id="endLead"></div>
     <div class="tiles" id="endStats"></div>
     <div id="endReview"></div>
     <div class="end-actions">
-      <small>要復習の単語は、次回もリストに残ります</small>
-      <button class="btn" id="againBtn" type="button">もう一度</button>
+      <small>要復習の単語は最後にまとめてやり直せます</small>
+      <span class="btns"><button class="btn ghost" id="altBtn" type="button"></button><button class="btn" id="nextBtn" type="button"></button></span>
     </div>
   </div>
 </div>
@@ -260,7 +263,8 @@ kbd{font-family:var(--f-ui);font-size:11px;border:1px solid var(--line);border-b
   <h3>音と順番</h3>
   <label class="row"><span class="lab">正解を読み上げる<small>正解のあと、お手本の発音を再生します</small></span><input class="sw" type="checkbox" id="optTts"></label>
   <label class="row"><span class="lab">効果音<small>正解・不正解のチャイム</small></span><input class="sw" type="checkbox" id="optSound"></label>
-  <label class="row"><span class="lab">シャッフル<small>次回の開始時から反映</small></span><input class="sw" type="checkbox" id="optShuffle"></label>
+  <label class="row"><span class="lab">シャッフル<small>「最初から」のときに反映</small></span><input class="sw" type="checkbox" id="optShuffle"></label>
+  <div class="row"><span class="lab">1回の枚数<small>この枚数ごとに区切って結果を出します。次の区切りから反映</small></span><input class="num" type="number" id="optRound" min="5" max="200" step="5"></div>
 
   <h3>単語リスト</h3>
   <p class="help" style="padding-left:0;list-style:none">1行に1語。<code>日本語, 中国語, ピンイン</code> の順で、カンマかタブ区切り。ピンインは省略可（自動表示）。別解は <code>/</code> で並べます（例：<code>星期天/星期日</code>）。</p>
@@ -274,7 +278,8 @@ kbd{font-family:var(--f-ui);font-size:11px;border:1px solid var(--line);border-b
   <h3>使い方</h3>
   <ul class="help">
     <li>声だけで進みます。正解すると自動で次のカードへ。クリックやタップは要りません。</li>
-    <li>声の操作：<b class="zh" lang="zh-Hans">跳过</b>（スキップ）／<b class="zh" lang="zh-Hans">答案</b>（答えを見る）／<b class="zh" lang="zh-Hans">重新开始</b>（最初から）</li>
+    <li>声の操作：<b class="zh" lang="zh-Hans">跳过</b>（スキップ）／<b class="zh" lang="zh-Hans">答案</b>（答えを見る）／<b class="zh" lang="zh-Hans">重新开始</b>（最初から）。区切りの画面では <b class="zh" lang="zh-Hans">继续</b>（次へ）／<b class="zh" lang="zh-Hans">再来一次</b>（同じ区切りをもう一度）／<b class="zh" lang="zh-Hans">复习</b>（要復習だけ）</li>
+    <li>20 枚ごとに区切って結果を出します。途中でページを閉じても、次に開くと続きの区切りから始まります。</li>
     <li>キーボードでも：<kbd>Space</kbd> スキップ、<kbd>A</kbd> 答えを見る</li>
     <li>状態表示が緑の「聞いています」のときに話してください。黄色の「再接続中」の間は聞き取れません（ブラウザが無音のあとに認識を一度閉じるためで、すぐ緑に戻ります）。</li>
     <li>効果音と読み上げは、ブラウザの仕様でページを一度クリックしてから有効になります。</li>
@@ -406,7 +411,7 @@ const DEFAULT_WORDS = `# 1行に1語：日本語, 中国語（別解は / 区切
 百, 一百/100, yī bǎi`;
 
 const SKEY = 'zhcards.settings.v2', WKEY = 'zhcards.words.v1';
-const DEF = { strictTone:true, tts:true, sound:true, shuffle:true, hintSec:8, pauseMs:800, lang:'zh-CN' };
+const DEF = { strictTone:true, tts:true, sound:true, shuffle:true, hintSec:8, pauseMs:800, roundSize:20, lang:'zh-CN' };
 let settings = Object.assign({}, DEF);
 try { Object.assign(settings, JSON.parse(localStorage.getItem(SKEY) || '{}')); } catch (e) {}
 let wordsText = DEFAULT_WORDS;
@@ -420,9 +425,9 @@ const el = {
   deck:$('#deck'), okCount:$('#okCount'), ngCount:$('#ngCount'), pos:$('#pos'), total:$('#total'),
   soundBtn:$('#soundBtn'), settingsBtn:$('#settingsBtn'), panel:$('#panel'), closePanel:$('#closePanel'),
   overlay:$('#overlay'), ovTitle:$('#ovTitle'), ovBody:$('#ovBody'), ovBtn:$('#ovBtn'),
-  end:$('#end'), endStats:$('#endStats'), endReview:$('#endReview'), againBtn:$('#againBtn'),
+  end:$('#end'), endTitle:$('#endTitle'), endLead:$('#endLead'), endStats:$('#endStats'), endReview:$('#endReview'), nextBtn:$('#nextBtn'), altBtn:$('#altBtn'), round:$('#round'),
   words:$('#words'), saveWords:$('#saveWords'), resetWords:$('#resetWords'), wordsMsg:$('#wordsMsg'),
-  optStrict:$('#optStrict'), optTts:$('#optTts'), optSound:$('#optSound'), optShuffle:$('#optShuffle'), optHint:$('#optHint'), optPause:$('#optPause'), optLang:$('#optLang'),
+  optStrict:$('#optStrict'), optTts:$('#optTts'), optSound:$('#optSound'), optShuffle:$('#optShuffle'), optHint:$('#optHint'), optPause:$('#optPause'), optRound:$('#optRound'), optLang:$('#optLang'),
 };
 const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
@@ -485,14 +490,20 @@ function matchTarget(sub, subLatin, c){
   return null;
 }
 const CMDS = [
-  { keys:['重新开始','重新開始','再来一次','再來一次'], act:'restart' },
+  { keys:['重新开始','重新開始'], act:'restart' },
   { keys:['跳过','跳過','下一个','下一個','下一题','下一題'], act:'skip' },
   { keys:['答案'], act:'reveal' },
 ];
-function matchCommand(sub){
+const END_CMDS = [
+  { keys:['继续','繼續','下一组','下一組','下一个','下一個'], act:'next' },
+  { keys:['再来一次','再來一次'], act:'again' },
+  { keys:['重新开始','重新開始'], act:'restart' },
+  { keys:['复习','複習'], act:'review' },
+];
+function matchCommand(sub, list){
   if (!sub) return null;
   let ts = null, tsDone = false;
-  for (const c of CMDS) for (const k of c.keys) {
+  for (const c of (list || CMDS)) for (const k of c.keys) {
     const ci = sub.indexOf(k); if (ci >= 0) return { act:c.act, end: ci + k.length };
     if (!tsDone) { ts = syl(sub, false); tsDone = true; }
     const ks = syl(k, false); const pi = findSub(ts, ks);
@@ -502,27 +513,53 @@ function matchCommand(sub){
 }
 
 /* ================= game state ================= */
-let deck = [], idx = 0, card = null, results = [], okCount = 0, ngCount = 0;
+const PKEY = 'zhcards.progress.v1';
+let allCards = [], order = [], pos = 0, roundStart = 0, roundCards = [], reviewMode = false, reviewSet = new Set();
+let idx = 0, card = null, results = [], okCount = 0, ngCount = 0;
 let busy = false, ended = false, wrongHere = 0, revealed = 0, hintTimer = null, hintTimer2 = null;
 let seg = { index:-1, offset:0 }, lastSeen = null;
 
 function shuffle(a){ for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } }
-function buildDeck(){
-  let list = parseWords(wordsText).map(compileCard);
-  if (!list.length) list = [compileCard({ ja:'（単語リストが空です）', alts:['空'], py:'kōng' })];
-  deck = list; if (settings.shuffle) shuffle(deck);
+function wordsKey(t){ let h = 0; for (let i = 0; i < t.length; i++) h = (h * 31 + t.charCodeAt(i)) | 0; return h + ':' + t.length; }
+function buildAll(){
+  allCards = parseWords(wordsText).map(compileCard);
+  if (!allCards.length) allCards = [compileCard({ ja:'（単語リストが空です）', alts:['空'], py:'kōng' })];
+  allCards.forEach((c, i) => { c.i = i; });
 }
-function renderDeckTrack(){ el.deck.innerHTML = ''; for (let i = 0; i < deck.length; i++) { const s = document.createElement('span'); s.className = 'seg'; el.deck.appendChild(s); } }
+function newOrder(){ order = allCards.map((_, i) => i); if (settings.shuffle) shuffle(order); pos = 0; reviewSet = new Set(); }
+/* Progress through the deck survives a reload, so a player can do one batch now and the next one later. */
+function loadProgress(){
+  try {
+    const p = JSON.parse(localStorage.getItem(PKEY) || 'null');
+    if (p && p.key === wordsKey(wordsText) && Array.isArray(p.order) && p.order.length === allCards.length && p.pos > 0 && p.pos < p.order.length) {
+      order = p.order; pos = p.pos; reviewSet = new Set(p.review || []); return true;
+    }
+  } catch (e) {}
+  return false;
+}
+function saveProgress(){ try { localStorage.setItem(PKEY, JSON.stringify({ key:wordsKey(wordsText), order, pos, review:[...reviewSet] })); } catch (e) {} }
+function clearProgress(){ try { localStorage.removeItem(PKEY); } catch (e) {} }
+
+/* fresh=true reshuffles from the first card; otherwise an unfinished run is resumed at its next batch. */
+function startGame(fresh){
+  buildAll();
+  if (fresh || !loadProgress()) newOrder();
+  if (fresh) clearProgress();
+  reviewMode = false; startRound();
+}
+function roundSize(){ return Math.max(1, parseInt(settings.roundSize, 10) || 20); }
+function startRound(){
+  roundStart = pos; roundCards = order.slice(pos, pos + roundSize()).map(i => allCards[i]);
+  idx = 0; results = []; okCount = 0; ngCount = 0; ended = false;
+  el.okCount.textContent = '0'; el.ngCount.textContent = '0'; el.total.textContent = roundCards.length;
+  el.round.textContent = reviewMode ? `復習 ${roundCards.length} 語` : `${roundStart + 1}〜${roundStart + roundCards.length} / ${order.length}`;
+  renderDeckTrack(); el.end.hidden = true; showCard();
+}
+function renderDeckTrack(){ el.deck.innerHTML = ''; for (let i = 0; i < roundCards.length; i++) { const s = document.createElement('span'); s.className = 'seg'; el.deck.appendChild(s); } }
 function markSeg(i, cls){ const s = el.deck.children[i]; if (s) s.className = 'seg ' + cls; }
 
-function startGame(){
-  buildDeck(); renderDeckTrack();
-  idx = 0; results = []; okCount = 0; ngCount = 0; ended = false;
-  el.okCount.textContent = '0'; el.ngCount.textContent = '0'; el.total.textContent = deck.length; el.end.hidden = true;
-  showCard();
-}
 function showCard(){
-  card = deck[idx]; busy = false; wrongHere = 0; revealed = 0; clearHints(); resumeRec();
+  card = roundCards[idx]; busy = false; wrongHere = 0; revealed = 0; clearHints(); resumeRec();
   el.card.classList.remove('ok', 'ng', 'anim'); void el.card.offsetWidth; el.card.classList.add('anim');
   el.answer.hidden = true; el.feedback.textContent = ''; el.feedback.className = 'feedback';
   el.ja.textContent = card.ja; el.pos.textContent = idx + 1; markSeg(idx, 'cur');
@@ -547,11 +584,13 @@ function showHint(level){
   el.feedback.textContent = level === 1 ? 'この漢字を読んでみてください' : 'ピンインの通りに言ってみてください';
   el.feedback.className = 'feedback';
 }
+/* The card moves on after the pause; the mic stays paused only as long as the model voice is actually playing. */
 function afterPause(ms, text){
   const willSpeak = settings.tts && ('speechSynthesis' in window);
-  if (willSpeak || (listening && Date.now() - sessionStart > 30000)) pauseRec();
-  let pending = 2; const done = () => { if (--pending === 0) next(); };
-  setTimeout(done, ms); speak(text, () => { resumeRec(); done(); });
+  const wasListening = listening;
+  if (willSpeak || (wasListening && Date.now() - sessionStart > 30000)) pauseRec();
+  setTimeout(() => speak(text, resumeRec), willSpeak && wasListening ? 150 : 0);
+  setTimeout(next, ms);
 }
 function matched(){
   busy = true; clearHints();
@@ -579,13 +618,36 @@ function wrong(){
   ding(false);
   if (wrongHere >= 4) showHint(2); else if (wrongHere >= 2) showHint(1);
 }
-function next(){ idx++; if (idx >= deck.length) finish(); else showCard(); }
-function finish(){
+function next(){ idx++; if (idx >= roundCards.length) finishRound(); else showCard(); }
+const needsReview = r => r.skipped || r.wrong > 0 || r.revealed > 0;
+function finishRound(){
   ended = true; card = null; busy = false; clearHints();
-  const perfect = results.filter(r => !r.skipped && r.wrong === 0 && r.revealed === 0).length;
-  const review = results.filter(r => r.skipped || r.wrong > 0 || r.revealed > 0);
+  const perfect = results.filter(r => !needsReview(r)).length;
+  const review = results.filter(needsReview);
+  if (reviewMode) reviewSet = new Set(review.map(r => r.c.i));
+  else results.forEach(r => { if (needsReview(r)) reviewSet.add(r.c.i); else reviewSet.delete(r.c.i); });
+  const n = roundCards.length;
+  pos = roundStart + n;
+  const last = pos >= order.length;
+  if (!reviewMode) { if (last) clearProgress(); else saveProgress(); }
+  const zh = (t, py) => `「<span class="zh" lang="zh-Hans">${t}</span> ${py}」`;
+  const rangeText = reviewMode ? `復習 ${n} 語` : `${roundStart + 1}〜${pos} 枚目 / ${order.length} 枚`;
+  let lead, nextLabel, nextAct, altLabel = '', altAct = '';
+  if (!reviewMode && !last) {
+    const nextSize = Math.min(roundSize(), order.length - pos);
+    el.endTitle.textContent = `${n} 枚終わりました`;
+    lead = `${rangeText}。${zh('继续', 'jìxù')}と言うと次の ${nextSize} 枚、${zh('再来一次', 'zài lái yí cì')}でこの ${n} 枚をもう一度。`;
+    nextLabel = `次の ${nextSize} 枚へ`; nextAct = 'next'; altLabel = `この ${n} 枚をもう一度`; altAct = 'again';
+  } else {
+    const rv = reviewSet.size;
+    el.endTitle.textContent = reviewMode ? '復習が終わりました' : '全部終わりました';
+    lead = `${rangeText}。${zh('重新开始', 'chóngxīn kāishǐ')}で最初から（シャッフル）。` + (rv ? `要復習が ${rv} 語あります。${zh('复习', 'fùxí')}でその ${rv} 語だけやり直せます。` : '');
+    nextLabel = '最初から'; nextAct = 'restart';
+    if (rv) { altLabel = `要復習の ${rv} 語だけ`; altAct = 'review'; }
+  }
+  el.endLead.innerHTML = lead;
   el.endStats.innerHTML =
-    `<div class="tile"><b>${deck.length}</b><span>単語</span></div>` +
+    `<div class="tile"><b>${n}</b><span>単語</span></div>` +
     `<div class="tile"><b>${perfect}</b><span>一発正解</span></div>` +
     `<div class="tile"><b>${review.length}</b><span>要復習</span></div>`;
   if (!review.length) el.endReview.innerHTML = '<div class="all-clear">全部一発正解でした</div>';
@@ -593,10 +655,23 @@ function finish(){
     const tag = r.skipped ? '<span class="tag skipped">スキップ</span>' : r.revealed === 2 ? '<span class="tag">ピンインを見た</span>' : r.revealed === 1 ? '<span class="tag">漢字を見た</span>' : `<span class="tag">言い直し ${r.wrong} 回</span>`;
     return `<li><span lang="ja">${esc(r.c.ja)}</span><span class="zh" lang="zh-Hans">${esc(r.c.alts[0])}</span><span class="py">${esc(cardPy(r.c))}</span>${tag}</li>`;
   }).join('') + '</ul>';
+  el.nextBtn.textContent = nextLabel; el.nextBtn.dataset.act = nextAct;
+  el.altBtn.hidden = !altLabel; el.altBtn.textContent = altLabel; el.altBtn.dataset.act = altAct;
   el.end.hidden = false;
 }
+function doEndCommand(act){
+  if (!ended) return;
+  const last = pos >= order.length;
+  if (act === 'next') { if (last) startGame(true); else startRound(); }
+  else if (act === 'again') { if (last && !reviewMode) startGame(true); else { pos = roundStart; startRound(); } }
+  else if (act === 'restart') startGame(true);
+  else if (act === 'review') {
+    if (!reviewSet.size) { startGame(true); return; }
+    reviewMode = true; order = [...reviewSet]; if (settings.shuffle) shuffle(order); pos = 0; startRound();
+  }
+}
 function doCommand(act){
-  if (act === 'restart') { startGame(); return; }
+  if (act === 'restart') { startGame(true); return; }
   if (act === 'skip') skip();
   else if (act === 'reveal') showHint(2);
 }
@@ -633,7 +708,7 @@ function createRec(){
 function scheduleRestart(){ clearTimeout(restartTimer); const d = errStreak ? Math.min(300 * Math.pow(2, errStreak), 6000) : 30; restartTimer = setTimeout(startRec, d); }
 /* Pause while the model pronunciation plays so the mic does not hear it, then resume for the next card. */
 function pauseRec(){ holdRestart = true; clearTimeout(restartTimer); if (rec && listening) { try { rec.abort(); } catch (e) {} } }
-function resumeRec(){ if (!holdRestart) return; holdRestart = false; if (wantListen && !listening) { setStatus('reconnect'); startRec(); } }
+function resumeRec(){ if (!holdRestart || ttsActive) return; holdRestart = false; if (wantListen && !listening) { setStatus('reconnect'); startRec(); } }
 function startRec(){
   if (!wantListen || !rec || listening || holdRestart) return;
   try { startedAt = Date.now(); rec.start(); }
@@ -652,7 +727,7 @@ function handleResult(i, res){
   if (i !== seg.index) seg = { index:i, offset:0 };
   lastSeen = { index:i, len:han(text).length };
   showHeard(text, isFinal);
-  if (ended) { for (const a of alts) { const c = matchCommand(han(a)); if (c && c.act === 'restart') { startGame(); return; } } return; }
+  if (ended) { for (const a of alts) { const c = matchCommand(han(a), END_CMDS); if (c) { doEndCommand(c.act); return; } } return; }
   if (busy || !card) return;
   for (const a of alts) {
     const h = han(a), sub = h.slice(seg.offset), subL = h ? '' : latin(a);
@@ -760,10 +835,12 @@ function pickVoice(){
   /* Voices installed on the device keep working when the network voice service stalls. */
   return same.find(v => v.localService) || same[0] || zh.find(v => v.localService) || zh[0] || null;
 }
+let ttsActive = false;
 function speak(text, cb){
-  let called = false; const done = () => { if (!called) { called = true; cb(); } };
+  let called = false; const done = () => { if (!called) { called = true; ttsActive = false; cb(); } };
   if (!settings.tts || !('speechSynthesis' in window)) { done(); return; }
-  /* Give up on a voice that never started or runs long, and silence it so the mic does not hear it on the next card. */
+  ttsActive = true;
+  /* Give up on a voice that never started or runs long, and silence it so the mic does not hear it later. */
   const finish = () => { if (called) return; try { speechSynthesis.cancel(); } catch (e) {} done(); };
   const go = () => {
     try {
@@ -772,13 +849,13 @@ function speak(text, cb){
       u.onstart = () => { started = true; };
       u.onend = done; u.onerror = done;
       speechSynthesis.resume(); speechSynthesis.speak(u);
-      setTimeout(() => { if (!started) finish(); }, 900);
-      setTimeout(finish, Math.min(2200, 500 + 400 * Math.max(1, han(text).length)));
+      setTimeout(() => { if (!started) finish(); }, 2000);
+      setTimeout(finish, Math.min(3000, 800 + 500 * Math.max(1, han(text).length)));
     } catch (e) { done(); }
   };
   try {
     /* cancel() immediately followed by speak() drops the utterance in Chrome, so give it a beat. */
-    if (speechSynthesis.speaking || speechSynthesis.pending) { speechSynthesis.cancel(); setTimeout(go, 80); } else go();
+    if (speechSynthesis.speaking || speechSynthesis.pending) { speechSynthesis.cancel(); setTimeout(go, 150); } else go();
   } catch (e) { done(); }
 }
 /* iOS keeps speechSynthesis silent until a speak() happens inside a real tap, so spend the first tap on an inaudible one. */
@@ -795,8 +872,9 @@ window.addEventListener('touchend', () => { ensureAudio(); unlockTts(); }, { pas
 /* ================= settings UI ================= */
 function syncSettingsUI(){
   el.optStrict.checked = settings.strictTone; el.optTts.checked = settings.tts; el.optSound.checked = settings.sound;
-  el.optShuffle.checked = settings.shuffle; el.optHint.value = settings.hintSec; el.optPause.value = (settings.pauseMs / 1000).toFixed(1); el.optLang.value = settings.lang; updateSoundBtn();
+  el.optShuffle.checked = settings.shuffle; el.optHint.value = settings.hintSec; el.optPause.value = (settings.pauseMs / 1000).toFixed(1); el.optRound.value = settings.roundSize; el.optLang.value = settings.lang; updateSoundBtn();
 }
+el.optRound.addEventListener('change', e => { settings.roundSize = Math.max(1, Math.min(500, parseInt(e.target.value, 10) || 20)); e.target.value = settings.roundSize; saveSettings(); });
 el.optPause.addEventListener('change', e => { const s = Math.max(.3, Math.min(3, parseFloat(e.target.value) || .8)); settings.pauseMs = Math.round(s * 1000); e.target.value = s.toFixed(1); saveSettings(); });
 el.optStrict.addEventListener('change', e => { settings.strictTone = e.target.checked; saveSettings(); });
 el.optTts.addEventListener('change', e => { settings.tts = e.target.checked; saveSettings(); });
@@ -808,25 +886,26 @@ el.saveWords.addEventListener('click', () => {
   const t = el.words.value; const n = parseWords(t).length;
   if (!n) { el.wordsMsg.style.color = 'var(--cinnabar)'; el.wordsMsg.textContent = '読み取れる行がありません'; return; }
   wordsText = t; try { localStorage.setItem(WKEY, t); } catch (e) {}
-  el.wordsMsg.style.color = ''; el.wordsMsg.textContent = `${n} 語で最初から始めます`; startGame(); setTimeout(closePanel, 600);
+  el.wordsMsg.style.color = ''; el.wordsMsg.textContent = `${n} 語で最初から始めます`; clearProgress(); startGame(true); setTimeout(closePanel, 600);
 });
-el.resetWords.addEventListener('click', () => { wordsText = DEFAULT_WORDS; el.words.value = DEFAULT_WORDS; try { localStorage.removeItem(WKEY); } catch (e) {} el.wordsMsg.style.color = ''; el.wordsMsg.textContent = '初期リストに戻しました'; startGame(); });
+el.resetWords.addEventListener('click', () => { wordsText = DEFAULT_WORDS; el.words.value = DEFAULT_WORDS; try { localStorage.removeItem(WKEY); } catch (e) {} el.wordsMsg.style.color = ''; el.wordsMsg.textContent = '初期リストに戻しました'; clearProgress(); startGame(true); });
 function openPanel(){ el.panel.classList.add('open'); }
 function closePanel(){ el.panel.classList.remove('open'); }
 el.settingsBtn.addEventListener('click', () => el.panel.classList.contains('open') ? closePanel() : openPanel());
 el.closePanel.addEventListener('click', closePanel);
-el.againBtn.addEventListener('click', startGame);
+el.nextBtn.addEventListener('click', () => doEndCommand(el.nextBtn.dataset.act));
+el.altBtn.addEventListener('click', () => doEndCommand(el.altBtn.dataset.act));
 window.addEventListener('keydown', e => {
   const tag = (e.target.tagName || '').toLowerCase();
   if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
   if (e.key === 'Escape') { closePanel(); return; }
-  if (ended) { if (e.key === 'Enter') startGame(); return; }
+  if (ended) { if (e.key === 'Enter') doEndCommand(el.nextBtn.dataset.act); return; }
   if (e.key === ' ') { e.preventDefault(); skip(); }
   else if (e.key === 'a' || e.key === 'A') showHint(2);
 });
 
 /* ================= boot ================= */
-syncSettingsUI(); el.words.value = wordsText; startGame();
+syncSettingsUI(); el.words.value = wordsText; startGame(false);
 let micBlockedByFrame = false;
 try {
   if (window.top !== window.self) {
@@ -846,7 +925,7 @@ window.zhcards = {
     const results = []; results[index] = r;
     onResult({ results, resultIndex:index });
   },
-  state(){ return { idx, ja: card && card.ja, alts: card && card.alts, busy, ended, seg, okCount, ngCount, wrongHere, revealed, listening, pinyin: !!PP() }; },
+  state(){ return { idx, ja: card && card.ja, alts: card && card.alts, busy, ended, seg, okCount, ngCount, wrongHere, revealed, listening, pinyin: !!PP(), pos, roundStart, orderLen: order.length, roundLen: roundCards.length, reviewMode, review: [...reviewSet], ttsActive, holdRestart }; },
 };
 })();
 </script>
