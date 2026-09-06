@@ -220,8 +220,7 @@ kbd{font-family:var(--f-ui);font-size:11px;border:1px solid var(--line);border-b
 
   <footer class="cmds">
     <span class="cmd"><b lang="zh-Hans">跳过</b><i>tiàoguò</i>スキップ</span>
-    <span class="cmd"><b lang="zh-Hans">提示</b><i>tíshì</i>漢字を見る</span>
-    <span class="cmd"><b lang="zh-Hans">答案</b><i>dá'àn</i>ピンインも見る</span>
+    <span class="cmd"><b lang="zh-Hans">答案</b><i>dá'àn</i>答えを見る</span>
   </footer>
 </div>
 
@@ -275,8 +274,8 @@ kbd{font-family:var(--f-ui);font-size:11px;border:1px solid var(--line);border-b
   <h3>使い方</h3>
   <ul class="help">
     <li>声だけで進みます。正解すると自動で次のカードへ。クリックやタップは要りません。</li>
-    <li>声の操作：<b class="zh" lang="zh-Hans">跳过</b>（スキップ）／<b class="zh" lang="zh-Hans">提示</b>（漢字ヒント、2回目でピンイン）／<b class="zh" lang="zh-Hans">答案</b>（漢字とピンイン）／<b class="zh" lang="zh-Hans">重新开始</b>（最初から）</li>
-    <li>キーボードでも：<kbd>Space</kbd> スキップ、<kbd>H</kbd> ヒント、<kbd>A</kbd> 答え</li>
+    <li>声の操作：<b class="zh" lang="zh-Hans">跳过</b>（スキップ）／<b class="zh" lang="zh-Hans">答案</b>（答えを見る）／<b class="zh" lang="zh-Hans">重新开始</b>（最初から）</li>
+    <li>キーボードでも：<kbd>Space</kbd> スキップ、<kbd>A</kbd> 答えを見る</li>
     <li>状態表示が緑の「聞いています」のときに話してください。黄色の「再接続中」の間は聞き取れません（ブラウザが無音のあとに認識を一度閉じるためで、すぐ緑に戻ります）。</li>
     <li>効果音と読み上げは、ブラウザの仕様でページを一度クリックしてから有効になります。</li>
     <li>対応ブラウザ：Chrome 推奨（Edge は反応が遅いことがあります）。Android は Chrome、iPhone は Safari。音声認識はオンラインで動きます。</li>
@@ -488,7 +487,6 @@ function matchTarget(sub, subLatin, c){
 const CMDS = [
   { keys:['重新开始','重新開始','再来一次','再來一次'], act:'restart' },
   { keys:['跳过','跳過','下一个','下一個','下一题','下一題'], act:'skip' },
-  { keys:['提示'], act:'hint' },
   { keys:['答案'], act:'reveal' },
 ];
 function matchCommand(sub){
@@ -600,7 +598,6 @@ function finish(){
 function doCommand(act){
   if (act === 'restart') { startGame(); return; }
   if (act === 'skip') skip();
-  else if (act === 'hint') showHint(revealed >= 1 ? 2 : 1);
   else if (act === 'reveal') showHint(2);
 }
 
@@ -825,7 +822,6 @@ window.addEventListener('keydown', e => {
   if (e.key === 'Escape') { closePanel(); return; }
   if (ended) { if (e.key === 'Enter') startGame(); return; }
   if (e.key === ' ') { e.preventDefault(); skip(); }
-  else if (e.key === 'h' || e.key === 'H') showHint(revealed >= 1 ? 2 : 1);
   else if (e.key === 'a' || e.key === 'A') showHint(2);
 });
 
