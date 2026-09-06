@@ -255,6 +255,7 @@ kbd{font-family:var(--f-ui);font-size:11px;border:1px solid var(--line);border-b
   <h3>判定</h3>
   <label class="row"><span class="lab">声調も判定する<small>オフ：同じ読みなら声調が違っても正解（初心者向け）</small></span><input class="sw" type="checkbox" id="optStrict"></label>
   <div class="row"><span class="lab">ヒントを出すまでの秒数<small>0 で自動ヒントなし。時間が来るとまず漢字、さらに待つとピンインが出ます。2回言い直しても漢字、4回でピンインです</small></span><input class="num" type="number" id="optHint" min="0" max="120" step="1"></div>
+  <div class="row"><span class="lab">次のカードまでの間（秒）<small>正解を見せておく時間。読み上げがオンのときは読み終わりも待ちます。急ぎたいときは 0.3 にして読み上げをオフに</small></span><input class="num" type="number" id="optPause" min="0.3" max="3" step="0.1"></div>
   <div class="row"><span class="lab">認識する中国語<small>簡体字（普通話）か繁体字（台湾）</small></span><select class="sel" id="optLang"><option value="zh-CN">zh-CN 普通話</option><option value="zh-TW">zh-TW 台湾</option></select></div>
 
   <h3>音と順番</h3>
@@ -406,7 +407,7 @@ const DEFAULT_WORDS = `# 1行に1語：日本語, 中国語（別解は / 区切
 百, 一百/100, yī bǎi`;
 
 const SKEY = 'zhcards.settings.v2', WKEY = 'zhcards.words.v1';
-const DEF = { strictTone:true, tts:true, sound:true, shuffle:true, hintSec:8, lang:'zh-CN' };
+const DEF = { strictTone:true, tts:true, sound:true, shuffle:true, hintSec:8, pauseMs:800, lang:'zh-CN' };
 let settings = Object.assign({}, DEF);
 try { Object.assign(settings, JSON.parse(localStorage.getItem(SKEY) || '{}')); } catch (e) {}
 let wordsText = DEFAULT_WORDS;
@@ -422,7 +423,7 @@ const el = {
   overlay:$('#overlay'), ovTitle:$('#ovTitle'), ovBody:$('#ovBody'), ovBtn:$('#ovBtn'),
   end:$('#end'), endStats:$('#endStats'), endReview:$('#endReview'), againBtn:$('#againBtn'),
   words:$('#words'), saveWords:$('#saveWords'), resetWords:$('#resetWords'), wordsMsg:$('#wordsMsg'),
-  optStrict:$('#optStrict'), optTts:$('#optTts'), optSound:$('#optSound'), optShuffle:$('#optShuffle'), optHint:$('#optHint'), optLang:$('#optLang'),
+  optStrict:$('#optStrict'), optTts:$('#optTts'), optSound:$('#optSound'), optShuffle:$('#optShuffle'), optHint:$('#optHint'), optPause:$('#optPause'), optLang:$('#optLang'),
 };
 const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
@@ -562,7 +563,7 @@ function matched(){
   el.card.classList.remove('ng'); el.card.classList.add('ok');
   renderAnswer(card, 'ok');
   el.feedback.textContent = clean ? '正解！' : '正解'; el.feedback.className = 'feedback ok';
-  ding(true); afterPause(1100, card.alts[0]);
+  ding(true); afterPause(settings.pauseMs, card.alts[0]);
 }
 function skip(){
   if (busy || ended || !card) return;
@@ -571,7 +572,7 @@ function skip(){
   markSeg(idx, 'skipped'); el.card.classList.remove('ok', 'ng');
   renderAnswer(card, 'revealed');
   el.feedback.textContent = 'スキップ'; el.feedback.className = 'feedback skip';
-  afterPause(1400, card.alts[0]);
+  afterPause(settings.pauseMs + 300, card.alts[0]);
 }
 function wrong(){
   wrongHere++; ngCount++; el.ngCount.textContent = ngCount;
@@ -684,7 +685,7 @@ function showOverlay(kind){
   el.overlay.dataset.kind = kind; el.overlay.hidden = false; setStatus('off'); el.tones.classList.remove('on', 'speech');
 }
 function retryFromOverlay(){
-  hadGesture = true; el.overlay.hidden = true; errStreak = 0; ensureAudio();
+  hadGesture = true; el.overlay.hidden = true; errStreak = 0; ensureAudio(); unlockTts();
   if (!rec) { if (!SR) return; createRec(); }
   wantListen = true; setStatus('prep'); startRec();
 }
@@ -765,26 +766,41 @@ function pickVoice(){
 function speak(text, cb){
   let called = false; const done = () => { if (!called) { called = true; cb(); } };
   if (!settings.tts || !('speechSynthesis' in window)) { done(); return; }
+  /* Give up on a voice that never started or runs long, and silence it so the mic does not hear it on the next card. */
+  const finish = () => { if (called) return; try { speechSynthesis.cancel(); } catch (e) {} done(); };
   const go = () => {
     try {
-      const u = new SpeechSynthesisUtterance(text); u.lang = settings.lang; const v = pickVoice(); if (v) u.voice = v; u.rate = .9;
-      u.onend = done; u.onerror = done; speechSynthesis.resume(); speechSynthesis.speak(u);
+      const u = new SpeechSynthesisUtterance(text); u.lang = settings.lang; const v = pickVoice(); if (v) u.voice = v; u.rate = 1;
+      let started = false;
+      u.onstart = () => { started = true; };
+      u.onend = done; u.onerror = done;
+      speechSynthesis.resume(); speechSynthesis.speak(u);
+      setTimeout(() => { if (!started) finish(); }, 900);
+      setTimeout(finish, Math.min(2200, 500 + 400 * Math.max(1, han(text).length)));
     } catch (e) { done(); }
   };
   try {
     /* cancel() immediately followed by speak() drops the utterance in Chrome, so give it a beat. */
     if (speechSynthesis.speaking || speechSynthesis.pending) { speechSynthesis.cancel(); setTimeout(go, 80); } else go();
   } catch (e) { done(); }
-  setTimeout(done, 3000);
+}
+/* iOS keeps speechSynthesis silent until a speak() happens inside a real tap, so spend the first tap on an inaudible one. */
+let ttsUnlocked = false;
+function unlockTts(){
+  if (ttsUnlocked || !('speechSynthesis' in window)) return; ttsUnlocked = true;
+  try { const u = new SpeechSynthesisUtterance(' '); u.volume = 0; speechSynthesis.speak(u); } catch (e) {}
 }
 window.addEventListener('pointerdown', () => { hadGesture = true; ensureAudio(); }, { passive:true });
-window.addEventListener('keydown', () => { hadGesture = true; ensureAudio(); });
+window.addEventListener('keydown', () => { hadGesture = true; ensureAudio(); unlockTts(); });
+window.addEventListener('click', () => { ensureAudio(); unlockTts(); });
+window.addEventListener('touchend', () => { ensureAudio(); unlockTts(); }, { passive:true });
 
 /* ================= settings UI ================= */
 function syncSettingsUI(){
   el.optStrict.checked = settings.strictTone; el.optTts.checked = settings.tts; el.optSound.checked = settings.sound;
-  el.optShuffle.checked = settings.shuffle; el.optHint.value = settings.hintSec; el.optLang.value = settings.lang; updateSoundBtn();
+  el.optShuffle.checked = settings.shuffle; el.optHint.value = settings.hintSec; el.optPause.value = (settings.pauseMs / 1000).toFixed(1); el.optLang.value = settings.lang; updateSoundBtn();
 }
+el.optPause.addEventListener('change', e => { const s = Math.max(.3, Math.min(3, parseFloat(e.target.value) || .8)); settings.pauseMs = Math.round(s * 1000); e.target.value = s.toFixed(1); saveSettings(); });
 el.optStrict.addEventListener('change', e => { settings.strictTone = e.target.checked; saveSettings(); });
 el.optTts.addEventListener('change', e => { settings.tts = e.target.checked; saveSettings(); });
 el.optSound.addEventListener('change', e => { settings.sound = e.target.checked; saveSettings(); ensureAudio(); });
