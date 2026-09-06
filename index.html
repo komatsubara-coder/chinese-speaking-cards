@@ -1,0 +1,842 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>中国語スピーキングカード</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700&family=Noto+Serif+SC:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+:root{
+  --ground:#f3f5f8; --ground-2:#e8edf4; --card:#ffffff; --ink:#172033; --ink-2:#3b475e; --slate:#64708a; --line:#dbe1eb; --grid:#b7c2d6;
+  --cobalt:#2748b0; --cobalt-soft:#e4eafb; --jade:#22906a; --jade-soft:#dff3ea; --cinnabar:#c2453a; --cinnabar-soft:#fbe6e3; --amber:#a56d12; --amber-soft:#fff0d3;
+  --shadow:0 18px 50px -22px rgba(23,32,51,.30), 0 2px 6px rgba(23,32,51,.06);
+  --f-ja:"Zen Kaku Gothic New","Hiragino Sans","Yu Gothic UI","Meiryo",system-ui,sans-serif;
+  --f-zh:"Noto Serif SC","Songti SC","SimSun","Noto Serif CJK SC",serif;
+  --f-ui:"IBM Plex Sans","Segoe UI",system-ui,-apple-system,sans-serif;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --ground:#0e131c; --ground-2:#151c29; --card:#181f2e; --ink:#e9edf3; --ink-2:#c3cbd9; --slate:#94a0b5; --line:#2a3446; --grid:#3d4a63;
+    --cobalt:#8aa6ff; --cobalt-soft:#1e2b4f; --jade:#4fc79a; --jade-soft:#123326; --cinnabar:#f08378; --cinnabar-soft:#3d1c19; --amber:#e3a83f; --amber-soft:#3a2a0e;
+    --shadow:0 18px 50px -22px rgba(0,0,0,.75), 0 2px 6px rgba(0,0,0,.35);
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --ground:#0e131c; --ground-2:#151c29; --card:#181f2e; --ink:#e9edf3; --ink-2:#c3cbd9; --slate:#94a0b5; --line:#2a3446; --grid:#3d4a63;
+  --cobalt:#8aa6ff; --cobalt-soft:#1e2b4f; --jade:#4fc79a; --jade-soft:#123326; --cinnabar:#f08378; --cinnabar-soft:#3d1c19; --amber:#e3a83f; --amber-soft:#3a2a0e;
+  --shadow:0 18px 50px -22px rgba(0,0,0,.75), 0 2px 6px rgba(0,0,0,.35);
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{height:100%}
+body{margin:0;background:var(--ground);color:var(--ink);font-family:var(--f-ja);font-size:15px;line-height:1.6;-webkit-font-smoothing:antialiased}
+button{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--cobalt);outline-offset:2px}
+.zh{font-family:var(--f-zh)}
+
+.app{min-height:100dvh;display:flex;flex-direction:column;background:radial-gradient(900px 500px at 50% -10%,var(--cobalt-soft),transparent 70%),var(--ground)}
+
+/* ---------- header ---------- */
+.top{display:flex;flex-wrap:wrap;align-items:center;gap:14px 18px;padding:12px 22px;border-bottom:1px solid var(--line);background:color-mix(in srgb,var(--card) 65%,transparent);backdrop-filter:blur(10px)}
+.brand{display:flex;align-items:center;gap:10px;margin-right:auto}
+.brand-zh{font-family:var(--f-zh);font-weight:600;font-size:21px;line-height:1;color:var(--cobalt);width:34px;height:34px;display:grid;place-items:center;border:1.5px solid var(--cobalt);border-radius:8px}
+.brand-ja{font-weight:700;font-size:15px;letter-spacing:.02em}
+.deck{display:flex;gap:2px;height:6px;flex:1 1 260px;min-width:0;order:1}
+.seg{flex:1;min-width:1px;background:var(--line);border-radius:2px;transition:background .3s}
+.seg.cur{background:var(--cobalt)} .seg.done{background:var(--jade)} .seg.hinted{background:var(--amber)} .seg.skipped{background:var(--cinnabar)}
+.counts{display:flex;gap:16px;font-family:var(--f-ui);font-size:13px;font-weight:500;font-variant-numeric:tabular-nums;color:var(--slate);white-space:nowrap}
+.counts b{font-weight:600;color:var(--ink)} .count.ok b{color:var(--jade)} .count.ng b{color:var(--cinnabar)}
+.tools{display:flex;gap:8px}
+.icon-btn{display:inline-flex;align-items:center;gap:6px;height:34px;padding:0 12px;border-radius:9px;border:1.5px solid var(--line);background:var(--card);cursor:pointer;font-size:13px;font-weight:500;transition:border-color .15s,background .15s}
+.icon-btn:hover{border-color:var(--cobalt);background:var(--cobalt-soft)}
+.icon-btn svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.icon-btn[data-state="off"]{color:var(--slate)}
+.icon-btn[data-state="locked"]{color:var(--amber);border-color:var(--amber)}
+@media (max-width:720px){ .deck{order:3;flex-basis:100%} .brand-ja{font-size:14px} .top{padding:10px 14px} }
+
+/* ---------- stage ---------- */
+.stage{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:26px;padding:26px 16px 18px}
+.card{width:min(720px,100%);background:var(--card);border:1.5px solid var(--line);border-radius:22px;padding:clamp(26px,5vw,48px) clamp(18px,5vw,56px);text-align:center;box-shadow:var(--shadow);transition:border-color .25s,background-color .25s}
+.card.anim{animation:cardIn .45s cubic-bezier(.2,.8,.2,1)}
+.card.ng{animation:shake .45s cubic-bezier(.36,.07,.19,.97)}
+.card.ok{border-color:var(--jade);background:color-mix(in srgb,var(--jade) 6%,var(--card))}
+@keyframes cardIn{from{opacity:0;transform:translateY(16px) scale(.985)}to{opacity:1;transform:none}}
+@keyframes shake{10%,90%{transform:translateX(-2px)}20%,80%{transform:translateX(4px)}30%,50%,70%{transform:translateX(-6px)}40%,60%{transform:translateX(6px)}}
+.eyebrow{font-size:12px;font-weight:500;letter-spacing:.14em;color:var(--slate)}
+.ja{font-weight:700;font-size:clamp(40px,9vw,76px);line-height:1.15;margin:16px 0 8px;text-wrap:balance;color:var(--ink)}
+.slot{min-height:156px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start}
+.answer{margin-top:12px;display:flex;flex-direction:column;align-items:center;gap:10px}
+.tzg{display:inline-flex;gap:8px;flex-wrap:wrap;justify-content:center}
+.cell{width:66px;height:66px;font-family:var(--f-zh);font-weight:600;font-size:44px;line-height:1;display:grid;place-items:center;border:1.5px solid var(--grid);border-radius:6px;color:var(--ink-2);
+  background:repeating-linear-gradient(90deg,var(--grid) 0 3px,transparent 3px 7px) center/100% 1px no-repeat,repeating-linear-gradient(180deg,var(--grid) 0 3px,transparent 3px 7px) center/1px 100% no-repeat}
+.answer[data-mode="ok"] .cell{color:var(--jade);border-color:var(--jade)}
+.answer[data-mode="ok"] .cell{animation:pop .35s cubic-bezier(.2,.8,.2,1) both}
+.answer[data-mode="ok"] .cell:nth-child(2){animation-delay:.06s} .answer[data-mode="ok"] .cell:nth-child(3){animation-delay:.12s} .answer[data-mode="ok"] .cell:nth-child(4){animation-delay:.18s} .answer[data-mode="ok"] .cell:nth-child(n+5){animation-delay:.24s}
+@keyframes pop{from{transform:scale(.55)}to{transform:none}}
+.py{font-family:var(--f-ui);font-weight:500;font-size:21px;color:var(--slate);letter-spacing:.01em}
+.answer[data-mode="ok"] .py{color:var(--jade)}
+.feedback{margin-top:14px;min-height:1.6em;font-weight:500;font-size:18px;color:var(--slate)}
+.feedback.ok{color:var(--jade)} .feedback.ng{color:var(--cinnabar)} .feedback.skip{color:var(--slate)}
+
+/* ---------- listening ---------- */
+.listen{display:flex;flex-direction:column;align-items:center;gap:8px;min-height:120px}
+.tones{--lvl:0;display:flex;gap:6px;color:var(--slate);opacity:.55;transition:color .3s,opacity .3s,transform .08s;transform:scale(calc(1 + var(--lvl) * .4))}
+.tones.sound{color:var(--cobalt);opacity:1}
+.tones svg{width:28px;height:28px;fill:none;stroke:currentColor;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round}
+.tones.on{color:var(--cobalt);opacity:1}
+.tones.on svg{animation:bob 1.6s ease-in-out infinite}
+.tones.on svg:nth-child(2){animation-delay:.2s} .tones.on svg:nth-child(3){animation-delay:.4s} .tones.on svg:nth-child(4){animation-delay:.6s}
+.tones.speech{color:var(--jade)}
+.tones.speech svg{animation-duration:.5s}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+.status{display:inline-flex;align-items:center;gap:8px;font-size:14px;color:var(--slate);padding:4px 13px 4px 11px;border-radius:999px;border:1px solid var(--line);background:color-mix(in srgb,var(--card) 70%,transparent)}
+.status::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--grid);flex:none}
+.status[data-k="listening"]{color:var(--jade);border-color:color-mix(in srgb,var(--jade) 45%,var(--line))}
+.status[data-k="listening"]::before{background:var(--jade);animation:blink 1.4s ease-in-out infinite}
+.status[data-k="reconnect"],.status[data-k="prep"]{color:var(--amber);border-color:color-mix(in srgb,var(--amber) 45%,var(--line))}
+.status[data-k="reconnect"]::before,.status[data-k="prep"]::before{background:var(--amber)}
+.status[data-k="off"]::before{background:var(--cinnabar)}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+.warn{font-size:13px;color:var(--cinnabar);text-align:center}
+.heard{display:flex;gap:10px;align-items:baseline;justify-content:center;flex-wrap:wrap;min-height:1.7em;max-width:min(720px,92vw)}
+.heard-lbl{display:inline-flex;align-items:center;gap:5px;align-self:center;font-size:12px;letter-spacing:.06em;color:var(--slate);padding:3px 10px 3px 8px;border-radius:999px;background:var(--ground-2);white-space:nowrap}
+.heard-lbl svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.heard-zh{font-size:22px;color:var(--slate);transition:color .2s}
+.heard-zh:empty::before{content:"…";color:var(--grid)}
+.heard.final .heard-zh{color:var(--ink)}
+.heard-py{font-family:var(--f-ui);font-weight:500;font-size:15px;color:var(--slate)}
+
+/* ---------- footer ---------- */
+.cmds{display:flex;justify-content:center;gap:22px;flex-wrap:wrap;padding:12px 18px 24px;color:var(--slate);font-size:13px}
+.cmd b{font-family:var(--f-zh);font-weight:600;font-size:16px;color:var(--ink-2);margin-right:5px}
+.cmd i{font-family:var(--f-ui);font-style:normal;font-weight:500;font-size:12px;color:var(--slate);margin-right:7px}
+
+/* ---------- overlays ---------- */
+.overlay,.end{position:fixed;inset:0;z-index:50;display:grid;place-items:center;padding:20px;background:color-mix(in srgb,var(--ground) 78%,transparent);backdrop-filter:blur(8px)}
+.overlay[data-kind="tap"]{cursor:pointer}
+.box{background:var(--card);border:1.5px solid var(--line);border-radius:20px;padding:30px 32px;max-width:460px;width:100%;box-shadow:var(--shadow);text-align:center}
+.box h2{margin:0 0 10px;font-size:22px;line-height:1.3;text-wrap:balance}
+.box p{margin:0;color:var(--ink-2);font-size:14px}
+.btn{display:inline-flex;align-items:center;justify-content:center;height:42px;padding:0 20px;border-radius:11px;border:1.5px solid var(--cobalt);background:var(--cobalt);color:#fff;font-weight:600;font-size:14px;cursor:pointer;transition:filter .15s}
+:root[data-theme="dark"] .btn,.btn.dk{color:#0e131c}
+.btn:hover{filter:brightness(1.08)}
+.btn.ghost{background:transparent;color:var(--cobalt)}
+.box .btn{margin-top:20px}
+.end .box{max-width:600px;text-align:left}
+.end h2{font-size:26px}
+.end .lead{color:var(--slate);font-size:14px;margin-bottom:16px}
+.tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:14px 0 18px}
+.tile{padding:14px 10px;border-radius:12px;background:var(--ground-2);text-align:center}
+.tile b{display:block;font-family:var(--f-ui);font-weight:600;font-size:30px;line-height:1.1;font-variant-numeric:tabular-nums}
+.tile span{font-size:12px;color:var(--slate)}
+.review{list-style:none;padding:0;margin:0;max-height:38vh;overflow:auto;border-top:1px solid var(--line)}
+.review li{display:grid;grid-template-columns:1fr auto auto auto;gap:12px;align-items:baseline;padding:8px 0;border-bottom:1px solid var(--line);font-size:15px}
+.review .zh{font-weight:600;color:var(--ink-2)}
+.review .py{font-size:14px}
+.tag{font-size:11px;font-weight:500;padding:2px 8px;border-radius:999px;background:var(--amber-soft);color:var(--amber);white-space:nowrap}
+.tag.skipped{background:var(--cinnabar-soft);color:var(--cinnabar)}
+.end-actions{display:flex;gap:10px;align-items:center;justify-content:space-between;margin-top:18px;flex-wrap:wrap}
+.end-actions small{color:var(--slate)}
+.all-clear{padding:14px;border-radius:12px;background:var(--jade-soft);color:var(--jade);font-weight:600;text-align:center}
+
+/* ---------- settings panel ---------- */
+.panel{position:fixed;top:0;right:0;bottom:0;width:min(460px,100vw);z-index:60;background:var(--card);border-left:1px solid var(--line);box-shadow:var(--shadow);overflow:auto;padding:20px 22px 30px;transform:translateX(100%);visibility:hidden;transition:transform .3s cubic-bezier(.2,.8,.2,1),visibility .3s}
+.panel.open{transform:none;visibility:visible}
+.panel-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
+.panel h2{margin:0;font-size:18px}
+.panel h3{margin:22px 0 4px;font-size:12px;font-weight:500;letter-spacing:.14em;color:var(--slate)}
+.row{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:11px 0;border-bottom:1px solid var(--line)}
+.row .lab{font-size:14px;font-weight:500}
+.row small{display:block;font-weight:400;color:var(--slate);font-size:12px;margin-top:1px}
+.sw{appearance:none;-webkit-appearance:none;width:44px;height:26px;border-radius:13px;background:var(--line);position:relative;cursor:pointer;flex:none;transition:background .2s;margin:0}
+.sw::after{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:var(--card);box-shadow:0 1px 3px rgba(0,0,0,.25);transition:left .2s}
+.sw:checked{background:var(--cobalt)} .sw:checked::after{left:21px}
+.num,.sel{font-family:var(--f-ui);font-size:14px;height:34px;padding:0 10px;border-radius:8px;border:1.5px solid var(--line);background:var(--ground);color:var(--ink)}
+.num{width:76px;text-align:right;font-variant-numeric:tabular-nums}
+textarea{width:100%;height:260px;margin-top:8px;padding:10px 12px;border-radius:10px;border:1.5px solid var(--line);background:var(--ground);color:var(--ink);font-family:var(--f-ui),var(--f-ja);font-size:13px;line-height:1.6;resize:vertical}
+.word-actions{display:flex;gap:8px;align-items:center;margin-top:10px;flex-wrap:wrap}
+.msg{font-size:12px;color:var(--jade);margin-left:auto}
+.help{margin:8px 0 0;padding-left:18px;font-size:13px;color:var(--ink-2)}
+.help li{margin:4px 0}
+.help code{font-family:var(--f-ui);font-size:12px;background:var(--ground-2);padding:1px 5px;border-radius:4px}
+kbd{font-family:var(--f-ui);font-size:11px;border:1px solid var(--line);border-bottom-width:2px;border-radius:5px;padding:0 5px;background:var(--ground)}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="top">
+    <div class="brand"><span class="brand-zh" lang="zh-Hans">说</span><span class="brand-ja">中国語スピーキングカード</span></div>
+    <div class="deck" id="deck" aria-hidden="true"></div>
+    <div class="counts">
+      <span class="count ok"><b id="okCount">0</b> 正解</span>
+      <span class="count ng"><b id="ngCount">0</b> 言い直し</span>
+      <span class="count pos"><b id="pos">1</b> / <span id="total">0</span></span>
+    </div>
+    <div class="tools">
+      <button class="icon-btn" id="soundBtn" type="button" aria-label="効果音">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path class="wave" d="M16 9a4 4 0 0 1 0 6"/><path class="wave" d="M18.5 6.5a8 8 0 0 1 0 11"/><path class="mute" d="M17 9l4 6M21 9l-4 6"/></svg>
+      </button>
+      <button class="icon-btn" id="settingsBtn" type="button" aria-label="設定と単語リスト">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/><circle cx="9" cy="6" r="2" fill="var(--card)"/><circle cx="15" cy="12" r="2" fill="var(--card)"/><circle cx="8" cy="18" r="2" fill="var(--card)"/></svg>
+        設定
+      </button>
+    </div>
+  </header>
+
+  <main class="stage">
+    <section class="card" id="card" aria-live="polite">
+      <div class="eyebrow">この単語を中国語で</div>
+      <div class="ja" id="ja" lang="ja">…</div>
+      <div class="slot">
+        <div class="answer" id="answer" hidden>
+          <div class="tzg" id="ansZh" lang="zh-Hans"></div>
+          <div class="py" id="ansPy"></div>
+        </div>
+        <div class="feedback" id="feedback"></div>
+      </div>
+    </section>
+
+    <section class="listen">
+      <div class="tones" id="tones" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><path d="M4 9h16"/></svg>
+        <svg viewBox="0 0 24 24"><path d="M5 18L19 6"/></svg>
+        <svg viewBox="0 0 24 24"><path d="M4 7l8 10 8-10"/></svg>
+        <svg viewBox="0 0 24 24"><path d="M5 6l14 12"/></svg>
+      </div>
+      <div class="status" id="status" role="status" data-k="prep">マイクを準備しています…</div>
+      <div class="warn" id="warn" hidden></div>
+      <div class="heard" id="heard">
+        <span class="heard-lbl" title="マイクが聞き取った言葉です"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 9.5a5 5 0 0 1 10 0c0 2.2-.9 3.1-1.7 4-.8.9-1.6 1.8-1.6 3.5a2.6 2.6 0 0 1-5.2 0"/><path d="M10 10a2.2 2.2 0 0 1 4.4 0c0 1.1-.6 1.6-1.2 2.2"/></svg>聞こえた言葉</span>
+        <span class="heard-zh zh" id="heardZh" lang="zh-Hans"></span><span class="heard-py" id="heardPy"></span>
+      </div>
+    </section>
+  </main>
+
+  <footer class="cmds">
+    <span class="cmd"><b lang="zh-Hans">跳过</b><i>tiàoguò</i>スキップ</span>
+    <span class="cmd"><b lang="zh-Hans">提示</b><i>tíshì</i>漢字を見る</span>
+    <span class="cmd"><b lang="zh-Hans">答案</b><i>dá'àn</i>ピンインも見る</span>
+  </footer>
+</div>
+
+<div class="overlay" id="overlay" hidden>
+  <div class="box">
+    <h2 id="ovTitle"></h2>
+    <p id="ovBody"></p>
+    <button class="btn" id="ovBtn" type="button">再試行</button>
+  </div>
+</div>
+
+<div class="end" id="end" hidden>
+  <div class="box">
+    <h2>ひと通り終わりました</h2>
+    <div class="lead">「<span class="zh" lang="zh-Hans">再来一次</span> zài lái yí cì」と言うと、もう一度最初から始まります。</div>
+    <div class="tiles" id="endStats"></div>
+    <div id="endReview"></div>
+    <div class="end-actions">
+      <small>要復習の単語は、次回もリストに残ります</small>
+      <button class="btn" id="againBtn" type="button">もう一度</button>
+    </div>
+  </div>
+</div>
+
+<aside class="panel" id="panel" aria-label="設定">
+  <div class="panel-head">
+    <h2>設定と単語リスト</h2>
+    <button class="icon-btn" id="closePanel" type="button">閉じる</button>
+  </div>
+
+  <h3>判定</h3>
+  <label class="row"><span class="lab">声調も判定する<small>オフ：同じ読みなら声調が違っても正解（初心者向け）</small></span><input class="sw" type="checkbox" id="optStrict"></label>
+  <div class="row"><span class="lab">ヒントを出すまでの秒数<small>0 で自動ヒントなし。時間が来るとまず漢字、さらに待つとピンインが出ます。2回言い直しても漢字、4回でピンインです</small></span><input class="num" type="number" id="optHint" min="0" max="120" step="1"></div>
+  <div class="row"><span class="lab">認識する中国語<small>簡体字（普通話）か繁体字（台湾）</small></span><select class="sel" id="optLang"><option value="zh-CN">zh-CN 普通話</option><option value="zh-TW">zh-TW 台湾</option></select></div>
+
+  <h3>音と順番</h3>
+  <label class="row"><span class="lab">正解を読み上げる<small>正解のあと、お手本の発音を再生します</small></span><input class="sw" type="checkbox" id="optTts"></label>
+  <label class="row"><span class="lab">効果音<small>正解・不正解のチャイム</small></span><input class="sw" type="checkbox" id="optSound"></label>
+  <label class="row"><span class="lab">シャッフル<small>次回の開始時から反映</small></span><input class="sw" type="checkbox" id="optShuffle"></label>
+
+  <h3>単語リスト</h3>
+  <p class="help" style="padding-left:0;list-style:none">1行に1語。<code>日本語, 中国語, ピンイン</code> の順で、カンマかタブ区切り。ピンインは省略可（自動表示）。別解は <code>/</code> で並べます（例：<code>星期天/星期日</code>）。</p>
+  <textarea id="words" spellcheck="false"></textarea>
+  <div class="word-actions">
+    <button class="btn" id="saveWords" type="button">保存して最初から</button>
+    <button class="btn ghost" id="resetWords" type="button">初期リストに戻す</button>
+    <span class="msg" id="wordsMsg"></span>
+  </div>
+
+  <h3>使い方</h3>
+  <ul class="help">
+    <li>声だけで進みます。正解すると自動で次のカードへ。クリックやタップは要りません。</li>
+    <li>声の操作：<b class="zh" lang="zh-Hans">跳过</b>（スキップ）／<b class="zh" lang="zh-Hans">提示</b>（漢字ヒント、2回目でピンイン）／<b class="zh" lang="zh-Hans">答案</b>（漢字とピンイン）／<b class="zh" lang="zh-Hans">重新开始</b>（最初から）</li>
+    <li>キーボードでも：<kbd>Space</kbd> スキップ、<kbd>H</kbd> ヒント、<kbd>A</kbd> 答え</li>
+    <li>状態表示が緑の「聞いています」のときに話してください。黄色の「再接続中」の間は聞き取れません（ブラウザが無音のあとに認識を一度閉じるためで、すぐ緑に戻ります）。</li>
+    <li>効果音と読み上げは、ブラウザの仕様でページを一度クリックしてから有効になります。</li>
+    <li>対応ブラウザ：Chrome 推奨（Edge は反応が遅いことがあります）。Android は Chrome、iPhone は Safari。音声認識はオンラインで動きます。</li>
+  </ul>
+</aside>
+
+<script src="https://cdn.jsdelivr.net/npm/pinyin-pro@3.29.3/dist/index.js" defer></script>
+<script>
+(function(){
+'use strict';
+
+/* ================= word list ================= */
+const DEFAULT_WORDS = `# 1行に1語：日本語, 中国語（別解は / 区切り）, ピンイン（省略可）
+# 食べ物・飲み物
+りんご, 苹果, píng guǒ
+バナナ, 香蕉, xiāng jiāo
+水, 水, shuǐ
+お茶, 茶, chá
+コーヒー, 咖啡, kā fēi
+ご飯, 米饭, mǐ fàn
+パン, 面包, miàn bāo
+牛乳, 牛奶, niú nǎi
+卵, 鸡蛋, jī dàn
+肉, 肉, ròu
+魚, 鱼, yú
+野菜, 蔬菜, shū cài
+果物, 水果, shuǐ guǒ
+ビール, 啤酒, pí jiǔ
+# 人
+先生, 老师, lǎo shī
+学生, 学生, xué sheng
+友達, 朋友, péng you
+お父さん, 爸爸, bà ba
+お母さん, 妈妈, mā ma
+お兄さん, 哥哥, gē ge
+お姉さん, 姐姐, jiě jie
+弟, 弟弟, dì di
+妹, 妹妹, mèi mei
+# 動物
+犬, 狗, gǒu
+猫, 猫, māo
+鳥, 鸟, niǎo
+馬, 马, mǎ
+# 乗り物・場所
+車, 汽车, qì chē
+自転車, 自行车, zì xíng chē
+飛行機, 飞机, fēi jī
+駅, 车站, chē zhàn
+空港, 机场, jī chǎng
+学校, 学校, xué xiào
+病院, 医院, yī yuàn
+銀行, 银行, yín háng
+会社, 公司, gōng sī
+家, 家, jiā
+部屋, 房间, fáng jiān
+トイレ, 厕所/洗手间, cè suǒ
+店, 商店, shāng diàn
+# 物
+本, 书, shū
+新聞, 报纸, bào zhǐ
+電話, 电话, diàn huà
+携帯電話, 手机, shǒu jī
+パソコン, 电脑, diàn nǎo
+テレビ, 电视, diàn shì
+腕時計, 手表, shǒu biǎo
+机, 桌子, zhuō zi
+椅子, 椅子, yǐ zi
+ドア, 门, mén
+お金, 钱, qián
+# 時間・季節・天気
+今日, 今天, jīn tiān
+明日, 明天, míng tiān
+昨日, 昨天, zuó tiān
+今, 现在, xiàn zài
+朝, 早上, zǎo shang
+夜, 晚上, wǎn shang
+月曜日, 星期一, xīng qī yī
+日曜日, 星期天/星期日, xīng qī tiān
+春, 春天, chūn tiān
+夏, 夏天, xià tiān
+秋, 秋天, qiū tiān
+冬, 冬天, dōng tiān
+天気, 天气, tiān qì
+雨, 雨, yǔ
+雪, 雪, xuě
+# 形容詞
+暑い, 热, rè
+寒い, 冷, lěng
+大きい, 大, dà
+小さい, 小, xiǎo
+多い, 多, duō
+少ない, 少, shǎo
+新しい, 新, xīn
+（値段が）高い, 贵, guì
+安い, 便宜, pián yi
+おいしい, 好吃, hǎo chī
+きれい, 漂亮, piào liang
+忙しい, 忙, máng
+うれしい, 高兴, gāo xìng
+# 動詞
+食べる, 吃, chī
+飲む, 喝, hē
+見る, 看, kàn
+聞く, 听, tīng
+話す, 说, shuō
+読む, 读, dú
+書く, 写, xiě
+買う, 买, mǎi
+行く, 去, qù
+来る, 来, lái
+寝る, 睡觉, shuì jiào
+起きる, 起床, qǐ chuáng
+働く, 工作, gōng zuò
+勉強する, 学习, xué xí
+好き, 喜欢, xǐ huan
+# あいさつ
+こんにちは, 你好, nǐ hǎo
+ありがとう, 谢谢, xiè xie
+さようなら, 再见, zài jiàn
+ごめんなさい, 对不起, duì bu qǐ
+おはよう, 早上好, zǎo shang hǎo
+# 数字（数字で認識されても正解になります）
+一, 一/1, yī
+二, 二/2, èr
+三, 三/3, sān
+五, 五/5, wǔ
+十, 十/10, shí
+百, 一百/100, yī bǎi`;
+
+const SKEY = 'zhcards.settings.v2', WKEY = 'zhcards.words.v1';
+const DEF = { strictTone:true, tts:true, sound:true, shuffle:true, hintSec:8, lang:'zh-CN' };
+let settings = Object.assign({}, DEF);
+try { Object.assign(settings, JSON.parse(localStorage.getItem(SKEY) || '{}')); } catch (e) {}
+let wordsText = DEFAULT_WORDS;
+try { const w = localStorage.getItem(WKEY); if (w) wordsText = w; } catch (e) {}
+function saveSettings(){ try { localStorage.setItem(SKEY, JSON.stringify(settings)); } catch (e) {} }
+
+const $ = s => document.querySelector(s);
+const el = {
+  card:$('#card'), ja:$('#ja'), answer:$('#answer'), ansZh:$('#ansZh'), ansPy:$('#ansPy'), feedback:$('#feedback'),
+  tones:$('#tones'), status:$('#status'), warn:$('#warn'), heard:$('#heard'), heardZh:$('#heardZh'), heardPy:$('#heardPy'),
+  deck:$('#deck'), okCount:$('#okCount'), ngCount:$('#ngCount'), pos:$('#pos'), total:$('#total'),
+  soundBtn:$('#soundBtn'), settingsBtn:$('#settingsBtn'), panel:$('#panel'), closePanel:$('#closePanel'),
+  overlay:$('#overlay'), ovTitle:$('#ovTitle'), ovBody:$('#ovBody'), ovBtn:$('#ovBtn'),
+  end:$('#end'), endStats:$('#endStats'), endReview:$('#endReview'), againBtn:$('#againBtn'),
+  words:$('#words'), saveWords:$('#saveWords'), resetWords:$('#resetWords'), wordsMsg:$('#wordsMsg'),
+  optStrict:$('#optStrict'), optTts:$('#optTts'), optSound:$('#optSound'), optShuffle:$('#optShuffle'), optHint:$('#optHint'), optLang:$('#optLang'),
+};
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+/* ================= text / pinyin ================= */
+const HAN = /\p{Script=Han}/u;
+function han(s){
+  if (!s) return '';
+  s = String(s).replace(/[０-９]/g, c => String.fromCharCode(c.charCodeAt(0) - 0xFEE0))
+               .replace(/[0-9]/g, d => '零一二三四五六七八九'[+d]);
+  let out = ''; for (const ch of s) if (HAN.test(ch)) out += ch; return out;
+}
+const latin = s => String(s || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+const PP = () => window.pinyinPro || null;
+function syl(h, tones){
+  const pp = PP(); if (!pp || !h) return null;
+  const opt = { toneType: tones ? 'num' : 'none', type:'array', nonZh:'removed' };
+  try {
+    const arr = pp.pinyin(h, opt); const chars = [...h];
+    if (arr.length === chars.length) return arr;
+    return chars.map(c => (pp.pinyin(c, opt)[0]) || c);
+  } catch (e) { return null; }
+}
+function pretty(h){ const pp = PP(); if (!pp || !h) return ''; try { return pp.pinyin(h, { nonZh:'removed' }); } catch (e) { return ''; } }
+function findSub(arr, sub){
+  if (!arr || !sub || !sub.length || sub.length > arr.length) return -1;
+  outer: for (let i = 0; i + sub.length <= arr.length; i++) {
+    for (let j = 0; j < sub.length; j++) if (arr[i + j] !== sub[j]) continue outer;
+    return i;
+  }
+  return -1;
+}
+function parseWords(text){
+  const out = [];
+  for (const raw of text.split(/\r?\n/)) {
+    const line = raw.trim(); if (!line || line.startsWith('#')) continue;
+    const parts = line.split(/\t|,|，/).map(s => s.trim());
+    if (parts.length < 2 || !parts[0] || !parts[1]) continue;
+    const alts = parts[1].split(/\/|／/).map(s => s.trim()).filter(Boolean);
+    if (!alts.length) continue;
+    out.push({ ja: parts[0], alts, py: parts[2] || '' });
+  }
+  return out;
+}
+function compileCard(w){ return { ja:w.ja, alts:w.alts, py:w.py, hanAlts:w.alts.map(han), latinAlts:w.alts.map(a => han(a) ? '' : latin(a)) }; }
+const cardPy = c => c.py || pretty(c.hanAlts[0]) || '';
+
+function matchTarget(sub, subLatin, c){
+  let ts = null, tsDone = false;
+  for (let k = 0; k < c.alts.length; k++) {
+    const a = c.hanAlts[k];
+    if (a) {
+      const ci = sub.indexOf(a); if (ci >= 0) return { end: ci + a.length };
+      if (!tsDone) { ts = syl(sub, settings.strictTone); tsDone = true; }
+      const as = syl(a, settings.strictTone); const pi = findSub(ts, as);
+      if (pi >= 0) return { end: pi + as.length };
+    } else if (c.latinAlts[k] && subLatin && subLatin.includes(c.latinAlts[k])) {
+      return { end: 0 };
+    }
+  }
+  return null;
+}
+const CMDS = [
+  { keys:['重新开始','重新開始','再来一次','再來一次'], act:'restart' },
+  { keys:['跳过','跳過','下一个','下一個','下一题','下一題'], act:'skip' },
+  { keys:['提示'], act:'hint' },
+  { keys:['答案'], act:'reveal' },
+];
+function matchCommand(sub){
+  if (!sub) return null;
+  let ts = null, tsDone = false;
+  for (const c of CMDS) for (const k of c.keys) {
+    const ci = sub.indexOf(k); if (ci >= 0) return { act:c.act, end: ci + k.length };
+    if (!tsDone) { ts = syl(sub, false); tsDone = true; }
+    const ks = syl(k, false); const pi = findSub(ts, ks);
+    if (pi >= 0) return { act:c.act, end: pi + ks.length };
+  }
+  return null;
+}
+
+/* ================= game state ================= */
+let deck = [], idx = 0, card = null, results = [], okCount = 0, ngCount = 0;
+let busy = false, ended = false, wrongHere = 0, revealed = 0, hintTimer = null, hintTimer2 = null;
+let seg = { index:-1, offset:0 }, lastSeen = null;
+
+function shuffle(a){ for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } }
+function buildDeck(){
+  let list = parseWords(wordsText).map(compileCard);
+  if (!list.length) list = [compileCard({ ja:'（単語リストが空です）', alts:['空'], py:'kōng' })];
+  deck = list; if (settings.shuffle) shuffle(deck);
+}
+function renderDeckTrack(){ el.deck.innerHTML = ''; for (let i = 0; i < deck.length; i++) { const s = document.createElement('span'); s.className = 'seg'; el.deck.appendChild(s); } }
+function markSeg(i, cls){ const s = el.deck.children[i]; if (s) s.className = 'seg ' + cls; }
+
+function startGame(){
+  buildDeck(); renderDeckTrack();
+  idx = 0; results = []; okCount = 0; ngCount = 0; ended = false;
+  el.okCount.textContent = '0'; el.ngCount.textContent = '0'; el.total.textContent = deck.length; el.end.hidden = true;
+  showCard();
+}
+function showCard(){
+  card = deck[idx]; busy = false; wrongHere = 0; revealed = 0; clearHints(); resumeRec();
+  el.card.classList.remove('ok', 'ng', 'anim'); void el.card.offsetWidth; el.card.classList.add('anim');
+  el.answer.hidden = true; el.feedback.textContent = ''; el.feedback.className = 'feedback';
+  el.ja.textContent = card.ja; el.pos.textContent = idx + 1; markSeg(idx, 'cur');
+  seg = lastSeen ? { index:lastSeen.index, offset:lastSeen.len } : { index:-1, offset:0 };
+  scheduleHints();
+}
+function renderAnswer(c, mode){
+  el.ansZh.innerHTML = '';
+  for (const ch of c.alts[0]) { const s = document.createElement('span'); s.className = 'cell'; s.textContent = ch; el.ansZh.appendChild(s); }
+  el.answer.dataset.mode = mode; el.ansPy.textContent = cardPy(c); el.ansPy.hidden = false; el.answer.hidden = false;
+}
+function scheduleHints(){
+  clearHints(); const s = +settings.hintSec || 0;
+  if (s > 0) hintTimer = setTimeout(() => { showHint(1); hintTimer2 = setTimeout(() => showHint(2), s * 1000); }, s * 1000);
+}
+function clearHints(){ clearTimeout(hintTimer); clearTimeout(hintTimer2); }
+/* Hint level 1 shows the characters only; level 2 adds the pinyin. */
+function showHint(level){
+  if (busy || ended || !card || level <= revealed) return;
+  revealed = level;
+  renderAnswer(card, 'revealed'); el.ansPy.hidden = level < 2;
+  el.feedback.textContent = level === 1 ? 'この漢字を読んでみてください' : 'ピンインの通りに言ってみてください';
+  el.feedback.className = 'feedback';
+}
+function afterPause(ms, text){
+  const willSpeak = settings.tts && ('speechSynthesis' in window);
+  if (willSpeak || (listening && Date.now() - sessionStart > 30000)) pauseRec();
+  let pending = 2; const done = () => { if (--pending === 0) next(); };
+  setTimeout(done, ms); speak(text, () => { resumeRec(); done(); });
+}
+function matched(){
+  busy = true; clearHints();
+  const clean = wrongHere === 0 && revealed === 0;
+  results.push({ c:card, wrong:wrongHere, revealed, skipped:false });
+  okCount++; el.okCount.textContent = okCount; markSeg(idx, clean ? 'done' : 'hinted');
+  el.card.classList.remove('ng'); el.card.classList.add('ok');
+  renderAnswer(card, 'ok');
+  el.feedback.textContent = clean ? '正解！' : '正解'; el.feedback.className = 'feedback ok';
+  ding(true); afterPause(1100, card.alts[0]);
+}
+function skip(){
+  if (busy || ended || !card) return;
+  busy = true; clearHints();
+  results.push({ c:card, wrong:wrongHere, revealed, skipped:true });
+  markSeg(idx, 'skipped'); el.card.classList.remove('ok', 'ng');
+  renderAnswer(card, 'revealed');
+  el.feedback.textContent = 'スキップ'; el.feedback.className = 'feedback skip';
+  afterPause(1400, card.alts[0]);
+}
+function wrong(){
+  wrongHere++; ngCount++; el.ngCount.textContent = ngCount;
+  el.card.classList.remove('ng'); void el.card.offsetWidth; el.card.classList.add('ng');
+  el.feedback.textContent = 'もう一度'; el.feedback.className = 'feedback ng';
+  ding(false);
+  if (wrongHere >= 4) showHint(2); else if (wrongHere >= 2) showHint(1);
+}
+function next(){ idx++; if (idx >= deck.length) finish(); else showCard(); }
+function finish(){
+  ended = true; card = null; busy = false; clearHints();
+  const perfect = results.filter(r => !r.skipped && r.wrong === 0 && r.revealed === 0).length;
+  const review = results.filter(r => r.skipped || r.wrong > 0 || r.revealed > 0);
+  el.endStats.innerHTML =
+    `<div class="tile"><b>${deck.length}</b><span>単語</span></div>` +
+    `<div class="tile"><b>${perfect}</b><span>一発正解</span></div>` +
+    `<div class="tile"><b>${review.length}</b><span>要復習</span></div>`;
+  if (!review.length) el.endReview.innerHTML = '<div class="all-clear">全部一発正解でした</div>';
+  else el.endReview.innerHTML = '<ul class="review">' + review.map(r => {
+    const tag = r.skipped ? '<span class="tag skipped">スキップ</span>' : r.revealed === 2 ? '<span class="tag">ピンインを見た</span>' : r.revealed === 1 ? '<span class="tag">漢字を見た</span>' : `<span class="tag">言い直し ${r.wrong} 回</span>`;
+    return `<li><span lang="ja">${esc(r.c.ja)}</span><span class="zh" lang="zh-Hans">${esc(r.c.alts[0])}</span><span class="py">${esc(cardPy(r.c))}</span>${tag}</li>`;
+  }).join('') + '</ul>';
+  el.end.hidden = false;
+}
+function doCommand(act){
+  if (act === 'restart') { startGame(); return; }
+  if (act === 'skip') skip();
+  else if (act === 'hint') showHint(revealed >= 1 ? 2 : 1);
+  else if (act === 'reveal') showHint(2);
+}
+
+/* ================= recognition ================= */
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+let rec = null, wantListen = false, listening = false, restartTimer = null, errStreak = 0, hadGesture = false, startedAt = 0, everListened = false, sessionStart = 0, holdRestart = false;
+const STATUS = { prep:'マイクを準備しています…', listening:'聞いています', reconnect:'再接続中… 緑になってから話してください', off:'停止中' };
+function setStatus(k){ el.status.textContent = STATUS[k] || k; el.status.dataset.k = STATUS[k] ? k : 'off'; if (k !== 'listening') el.warn.hidden = true; }
+
+function createRec(){
+  rec = new SR();
+  rec.lang = settings.lang; rec.continuous = true; rec.interimResults = true; rec.maxAlternatives = 5;
+  rec.onstart = () => { listening = true; everListened = true; errStreak = 0; sessionStart = Date.now(); seg = { index:-1, offset:0 }; lastSeen = null; setStatus('listening'); el.tones.classList.add('on'); startMeter(); };
+  rec.onend = () => { listening = false; el.tones.classList.remove('on', 'speech', 'sound'); if (wantListen) { setStatus('reconnect'); if (!holdRestart) scheduleRestart(); } };
+  rec.onsoundstart = () => el.tones.classList.add('sound');
+  rec.onsoundend = () => el.tones.classList.remove('sound');
+  rec.onerror = e => {
+    const err = e.error;
+    if (err === 'not-allowed' || err === 'service-not-allowed') {
+      wantListen = false;
+      if (!hadGesture && Date.now() - startedAt < 1500) showOverlay('tap');
+      else if (everListened) showOverlay('resume');
+      else showOverlay('denied');
+    } else if (err === 'audio-capture') { wantListen = false; showOverlay('nomic'); }
+    else if (err === 'network') { errStreak++; if (errStreak >= 4) { wantListen = false; showOverlay('network'); } }
+    else if (err === 'no-speech' || err === 'aborted') { /* restarts from onend */ }
+    else { errStreak++; }
+  };
+  rec.onspeechstart = () => el.tones.classList.add('speech');
+  rec.onspeechend = () => el.tones.classList.remove('speech');
+  rec.onresult = onResult;
+}
+function scheduleRestart(){ clearTimeout(restartTimer); const d = errStreak ? Math.min(300 * Math.pow(2, errStreak), 6000) : 30; restartTimer = setTimeout(startRec, d); }
+/* Pause while the model pronunciation plays so the mic does not hear it, then resume for the next card. */
+function pauseRec(){ holdRestart = true; clearTimeout(restartTimer); if (rec && listening) { try { rec.abort(); } catch (e) {} } }
+function resumeRec(){ if (!holdRestart) return; holdRestart = false; if (wantListen && !listening) { setStatus('reconnect'); startRec(); } }
+function startRec(){
+  if (!wantListen || !rec || listening || holdRestart) return;
+  try { startedAt = Date.now(); rec.start(); }
+  catch (e) { errStreak++; if (errStreak < 10) scheduleRestart(); }
+}
+function onResult(ev){
+  const n = ev.results.length; if (!n) return;
+  const from = Math.max(0, ev.resultIndex || 0);
+  for (let j = from; j < n; j++) handleResult(j, ev.results[j]);
+}
+function handleResult(i, res){
+  const alts = [];
+  for (let k = 0; k < res.length; k++) { const t = (res[k].transcript || '').trim(); if (t && !alts.includes(t)) alts.push(t); }
+  if (!alts.length) return;
+  const text = alts[0], isFinal = !!res.isFinal;
+  if (i !== seg.index) seg = { index:i, offset:0 };
+  lastSeen = { index:i, len:han(text).length };
+  showHeard(text, isFinal);
+  if (ended) { for (const a of alts) { const c = matchCommand(han(a)); if (c && c.act === 'restart') { startGame(); return; } } return; }
+  if (busy || !card) return;
+  for (const a of alts) {
+    const h = han(a), sub = h.slice(seg.offset), subL = h ? '' : latin(a);
+    if (!sub && !subL) continue;
+    const cmd = matchCommand(sub); if (cmd) { seg.offset += cmd.end; doCommand(cmd.act); return; }
+    const m = matchTarget(sub, subL, card); if (m) { seg.offset += m.end; matched(); return; }
+  }
+  if (isFinal) { const h = han(text); if (h.length > seg.offset) { wrong(); seg.offset = h.length; } }
+}
+function showHeard(text, isFinal){
+  el.heardZh.textContent = text; el.heardPy.textContent = pretty(han(text)); el.heard.classList.toggle('final', isFinal);
+}
+
+/* ================= overlays ================= */
+const OV = {
+  unsupported:{ t:'このブラウザでは音声認識が使えません', b:'Google Chrome か Microsoft Edge で開いてください。iPhone は Safari で動きます（設定の「Siriと音声入力」をオンに）。', btn:null },
+  tap:{ t:'タップして開始', b:'ブラウザの仕様で、最初の1回だけ操作が必要です。ここをタップするとマイクが有効になり、あとは声だけで進みます。', btn:'開始する' },
+  resume:{ t:'タップして再開', b:'ブラウザが音声認識を一度止めました。ここをタップすると同じカードから再開します。', btn:'再開する' },
+  framed:{ t:'この埋め込み表示ではマイクが使えません', b:'アーティファクトの枠内ではブラウザがマイクを許可しません。HTML ファイルを Chrome か Edge で直接開くと、声だけで遊べます。', btn:null },
+  denied:{ t:'マイクが許可されていません', b:'アドレスバーのマイクまたは鍵のアイコンから「許可」にして、再試行してください。', btn:'再試行' },
+  nomic:{ t:'マイクが見つかりません', b:'マイクを接続してから再試行してください。', btn:'再試行' },
+  network:{ t:'音声認識サービスに接続できません', b:'インターネット接続を確認してください。音声認識はオンラインでのみ動きます（Chrome / Edge 推奨）。', btn:'再試行' },
+};
+function showOverlay(kind){
+  const o = OV[kind]; el.ovTitle.textContent = o.t; el.ovBody.textContent = o.b;
+  el.ovBtn.hidden = !o.btn; if (o.btn) el.ovBtn.textContent = o.btn;
+  el.overlay.dataset.kind = kind; el.overlay.hidden = false; setStatus('off'); el.tones.classList.remove('on', 'speech');
+}
+function retryFromOverlay(){
+  hadGesture = true; el.overlay.hidden = true; errStreak = 0; ensureAudio();
+  if (!rec) { if (!SR) return; createRec(); }
+  wantListen = true; setStatus('prep'); startRec();
+}
+el.ovBtn.addEventListener('click', e => { e.stopPropagation(); retryFromOverlay(); });
+el.overlay.addEventListener('click', () => { const k = el.overlay.dataset.kind; if (k === 'tap' || k === 'resume') retryFromOverlay(); });
+
+/* ================= sound & speech ================= */
+let actx = null;
+function ensureAudio(){
+  try {
+    if (!actx) { const AC = window.AudioContext || window.webkitAudioContext; if (AC) { actx = new AC(); actx.onstatechange = updateSoundBtn; } }
+    if (actx && actx.state === 'suspended') actx.resume().catch(() => {});
+  } catch (e) {}
+  updateSoundBtn();
+}
+function ding(ok){
+  if (!settings.sound) return; ensureAudio();
+  if (!actx || actx.state !== 'running') return;
+  const t = actx.currentTime, notes = ok ? [[784, 0], [1175, .1]] : [[196, 0]];
+  for (const [f, d] of notes) {
+    const o = actx.createOscillator(), g = actx.createGain();
+    o.type = ok ? 'sine' : 'triangle'; o.frequency.value = f;
+    g.gain.setValueAtTime(.0001, t + d); g.gain.exponentialRampToValueAtTime(ok ? .22 : .1, t + d + .015); g.gain.exponentialRampToValueAtTime(.0001, t + d + (ok ? .4 : .22));
+    o.connect(g).connect(actx.destination); o.start(t + d); o.stop(t + d + .5);
+  }
+}
+function updateSoundBtn(){
+  const ready = !!actx && actx.state === 'running';
+  const state = !settings.sound ? 'off' : ready ? 'on' : 'locked';
+  el.soundBtn.dataset.state = state;
+  el.soundBtn.title = state === 'off' ? '効果音はオフ（クリックでオン）' : state === 'on' ? '効果音はオン（クリックでオフ）' : 'クリックで効果音と読み上げを有効化';
+  el.soundBtn.querySelectorAll('.wave').forEach(p => p.style.display = state === 'off' ? 'none' : '');
+  el.soundBtn.querySelector('.mute').style.display = state === 'off' ? '' : 'none';
+}
+el.soundBtn.addEventListener('click', () => {
+  hadGesture = true;
+  const locked = settings.sound && !(actx && actx.state === 'running');
+  if (!locked) settings.sound = !settings.sound; /* a click on the amber button only unlocks audio */
+  saveSettings(); ensureAudio(); syncSettingsUI();
+});
+/* ---- live mic level (desktop only: on phones the recognizer must own the mic) ---- */
+const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+let meter = null, quietSince = 0;
+async function startMeter(){
+  if (meter || isMobile || !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return;
+  meter = { pending:true };
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio:true, video:false });
+    ensureAudio(); if (!actx) throw new Error('no audio context');
+    const an = actx.createAnalyser(); an.fftSize = 512; actx.createMediaStreamSource(stream).connect(an);
+    const data = new Float32Array(an.fftSize); meter = { an, stream };
+    quietSince = Date.now();
+    const tick = () => {
+      let lvl = 0;
+      if (actx.state === 'running') {
+        an.getFloatTimeDomainData(data); let sum = 0; for (let i = 0; i < data.length; i++) sum += data[i] * data[i];
+        const rms = Math.sqrt(sum / data.length); lvl = Math.min(1, rms * 6);
+        if (rms > 0.0005) quietSince = Date.now();
+        const quiet = listening && Date.now() - quietSince > 15000;
+        if (quiet) { el.warn.textContent = 'マイクの音が入っていません。OS の入力デバイスと音量を確認してください'; el.warn.hidden = false; }
+        else if (!el.warn.hidden && listening) el.warn.hidden = true;
+      }
+      el.tones.style.setProperty('--lvl', lvl.toFixed(2));
+      requestAnimationFrame(tick);
+    };
+    tick();
+  } catch (e) { meter = null; }
+}
+let voices = [];
+function loadVoices(){ try { voices = speechSynthesis.getVoices() || []; } catch (e) {} }
+if ('speechSynthesis' in window) { loadVoices(); speechSynthesis.onvoiceschanged = loadVoices; }
+function pickVoice(){
+  const l = settings.lang.toLowerCase(), norm = v => v.lang.toLowerCase().replace('_', '-');
+  const zh = voices.filter(v => norm(v).startsWith('zh')), same = zh.filter(v => norm(v) === l);
+  /* Voices installed on the device keep working when the network voice service stalls. */
+  return same.find(v => v.localService) || same[0] || zh.find(v => v.localService) || zh[0] || null;
+}
+function speak(text, cb){
+  let called = false; const done = () => { if (!called) { called = true; cb(); } };
+  if (!settings.tts || !('speechSynthesis' in window)) { done(); return; }
+  const go = () => {
+    try {
+      const u = new SpeechSynthesisUtterance(text); u.lang = settings.lang; const v = pickVoice(); if (v) u.voice = v; u.rate = .9;
+      u.onend = done; u.onerror = done; speechSynthesis.resume(); speechSynthesis.speak(u);
+    } catch (e) { done(); }
+  };
+  try {
+    /* cancel() immediately followed by speak() drops the utterance in Chrome, so give it a beat. */
+    if (speechSynthesis.speaking || speechSynthesis.pending) { speechSynthesis.cancel(); setTimeout(go, 80); } else go();
+  } catch (e) { done(); }
+  setTimeout(done, 3000);
+}
+window.addEventListener('pointerdown', () => { hadGesture = true; ensureAudio(); }, { passive:true });
+window.addEventListener('keydown', () => { hadGesture = true; ensureAudio(); });
+
+/* ================= settings UI ================= */
+function syncSettingsUI(){
+  el.optStrict.checked = settings.strictTone; el.optTts.checked = settings.tts; el.optSound.checked = settings.sound;
+  el.optShuffle.checked = settings.shuffle; el.optHint.value = settings.hintSec; el.optLang.value = settings.lang; updateSoundBtn();
+}
+el.optStrict.addEventListener('change', e => { settings.strictTone = e.target.checked; saveSettings(); });
+el.optTts.addEventListener('change', e => { settings.tts = e.target.checked; saveSettings(); });
+el.optSound.addEventListener('change', e => { settings.sound = e.target.checked; saveSettings(); ensureAudio(); });
+el.optShuffle.addEventListener('change', e => { settings.shuffle = e.target.checked; saveSettings(); });
+el.optHint.addEventListener('change', e => { settings.hintSec = Math.max(0, Math.min(120, parseInt(e.target.value, 10) || 0)); e.target.value = settings.hintSec; saveSettings(); if (card && !busy) scheduleHints(); });
+el.optLang.addEventListener('change', e => { settings.lang = e.target.value; saveSettings(); if (rec) { rec.lang = settings.lang; try { rec.abort(); } catch (err) {} } });
+el.saveWords.addEventListener('click', () => {
+  const t = el.words.value; const n = parseWords(t).length;
+  if (!n) { el.wordsMsg.style.color = 'var(--cinnabar)'; el.wordsMsg.textContent = '読み取れる行がありません'; return; }
+  wordsText = t; try { localStorage.setItem(WKEY, t); } catch (e) {}
+  el.wordsMsg.style.color = ''; el.wordsMsg.textContent = `${n} 語で最初から始めます`; startGame(); setTimeout(closePanel, 600);
+});
+el.resetWords.addEventListener('click', () => { wordsText = DEFAULT_WORDS; el.words.value = DEFAULT_WORDS; try { localStorage.removeItem(WKEY); } catch (e) {} el.wordsMsg.style.color = ''; el.wordsMsg.textContent = '初期リストに戻しました'; startGame(); });
+function openPanel(){ el.panel.classList.add('open'); }
+function closePanel(){ el.panel.classList.remove('open'); }
+el.settingsBtn.addEventListener('click', () => el.panel.classList.contains('open') ? closePanel() : openPanel());
+el.closePanel.addEventListener('click', closePanel);
+el.againBtn.addEventListener('click', startGame);
+window.addEventListener('keydown', e => {
+  const tag = (e.target.tagName || '').toLowerCase();
+  if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
+  if (e.key === 'Escape') { closePanel(); return; }
+  if (ended) { if (e.key === 'Enter') startGame(); return; }
+  if (e.key === ' ') { e.preventDefault(); skip(); }
+  else if (e.key === 'h' || e.key === 'H') showHint(revealed >= 1 ? 2 : 1);
+  else if (e.key === 'a' || e.key === 'A') showHint(2);
+});
+
+/* ================= boot ================= */
+syncSettingsUI(); el.words.value = wordsText; startGame();
+let micBlockedByFrame = false;
+try {
+  if (window.top !== window.self) {
+    const pol = document.permissionsPolicy || document.featurePolicy;
+    if (pol && typeof pol.allowsFeature === 'function') micBlockedByFrame = !pol.allowsFeature('microphone');
+  }
+} catch (e) {}
+if (!SR) showOverlay('unsupported');
+else if (micBlockedByFrame) showOverlay('framed');
+else { createRec(); wantListen = true; setStatus('prep'); startRec(); }
+
+let simIndex = 0;
+window.zhcards = {
+  simulate(text, final = true, index){
+    if (index == null) index = ++simIndex;
+    const r = [{ transcript:text }]; r.isFinal = final;
+    const results = []; results[index] = r;
+    onResult({ results, resultIndex:index });
+  },
+  state(){ return { idx, ja: card && card.ja, alts: card && card.alts, busy, ended, seg, okCount, ngCount, wrongHere, revealed, listening, pinyin: !!PP() }; },
+};
+})();
+</script>
+</body>
+</html>
