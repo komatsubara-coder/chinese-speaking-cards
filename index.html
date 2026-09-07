@@ -46,8 +46,8 @@ button{font:inherit;color:inherit}
 .brand{display:flex;align-items:center;gap:10px;margin-right:auto}
 .brand-zh{font-family:var(--f-zh);font-weight:600;font-size:21px;line-height:1;color:var(--cobalt);width:34px;height:34px;display:grid;place-items:center;border:1.5px solid var(--cobalt);border-radius:8px}
 .brand-ja{font-weight:700;font-size:15px;letter-spacing:.02em}
-.levels{display:inline-flex;gap:2px;padding:3px;border-radius:10px;background:var(--ground-2);border:1px solid var(--line)}
-.lvl{height:28px;padding:0 11px;border:0;border-radius:7px;background:transparent;font-family:var(--f-ui);font-size:13px;font-weight:500;color:var(--slate);cursor:pointer;white-space:nowrap}
+.levels{display:flex;gap:2px;padding:3px;margin-top:8px;border-radius:10px;background:var(--ground-2);border:1px solid var(--line)}
+.lvl{flex:1;height:34px;padding:0 8px;border:0;border-radius:7px;background:transparent;font-family:var(--f-ui);font-size:13px;font-weight:500;color:var(--slate);cursor:pointer;white-space:nowrap}
 .lvl:hover{color:var(--ink)}
 .lvl.active{background:var(--card);color:var(--cobalt);box-shadow:0 1px 3px rgba(0,0,0,.14)}
 .deck{display:flex;gap:2px;height:6px;flex:1 1 260px;min-width:0;order:1}
@@ -178,7 +178,6 @@ kbd{font-family:var(--f-ui);font-size:11px;border:1px solid var(--line);border-b
 <div class="app">
   <header class="top">
     <div class="brand"><span class="brand-zh" lang="zh-Hans">说</span><span class="brand-ja">中国語スピーキングカード</span></div>
-    <div class="levels" id="levels" aria-label="レベル"></div>
     <div class="deck" id="deck" aria-hidden="true"></div>
     <div class="counts">
       <span class="count ok"><b id="okCount">0</b> 正解</span>
@@ -259,6 +258,10 @@ kbd{font-family:var(--f-ui);font-size:11px;border:1px solid var(--line);border-b
     <button class="icon-btn" id="closePanel" type="button">閉じる</button>
   </div>
 
+  <h3>レベル</h3>
+  <div class="levels" id="levels" aria-label="レベル"></div>
+  <p class="help" id="levelNote" style="padding-left:0;list-style:none"></p>
+
   <h3>判定</h3>
   <label class="row"><span class="lab">声調も判定する<small>オフ：同じ読みなら声調が違っても正解（初心者向け）</small></span><input class="sw" type="checkbox" id="optStrict"></label>
   <div class="row"><span class="lab">ヒントを出すまでの秒数<small>0 で自動ヒントなし。時間が来るとまず漢字、さらに待つとピンインが出ます。2回言い直しても漢字、4回でピンインです</small></span><input class="num" type="number" id="optHint" min="0" max="120" step="1"></div>
@@ -288,7 +291,7 @@ kbd{font-family:var(--f-ui);font-size:11px;border:1px solid var(--line);border-b
     <li>声だけで進みます。正解すると自動で次のカードへ。クリックやタップは要りません。</li>
     <li>声の操作：<b class="zh" lang="zh-Hans">跳过</b>（スキップ）／<b class="zh" lang="zh-Hans">答案</b>（答えを見る）／<b class="zh" lang="zh-Hans">重新开始</b>（最初から）。区切りの画面では <b class="zh" lang="zh-Hans">继续</b>（次へ）／<b class="zh" lang="zh-Hans">再来一次</b>（同じ区切りをもう一度）／<b class="zh" lang="zh-Hans">复习</b>（要復習だけ）</li>
     <li>20 枚ごとに区切って結果を出します。途中でページを閉じても、次に開くと続きの区切りから始まります。どの区切りの画面からでも、それまでの要復習だけをやり直せます。</li>
-    <li>レベルは上のボタンで切り替えます。HSK 1・2・3 の語彙 600 語を難しさの順に 200 語ずつ分けたもので、進み具合はレベルごとに覚えています。</li>
+    <li>レベルはこの設定画面の一番上で切り替えます。HSK 1・2・3 の語彙 600 語を難しさの順に 200 語ずつ分けたもので、進み具合はレベルごとに覚えています。</li>
     <li>設定・単語リスト・進み具合は、このブラウザの中（localStorage）にだけ保存されます。クッキーではなく、サーバーにも送られません。ブラウザのサイトデータを消すと消えます。</li>
     <li>キーボードでも：<kbd>Space</kbd> スキップ、<kbd>A</kbd> 答えを見る</li>
     <li>状態表示が緑の「聞いています」のときに話してください。黄色の「再接続中」の間は聞き取れません（ブラウザが無音のあとに認識を一度閉じるためで、すぐ緑に戻ります）。</li>
@@ -1039,7 +1042,7 @@ const el = {
   soundBtn:$('#soundBtn'), settingsBtn:$('#settingsBtn'), panel:$('#panel'), closePanel:$('#closePanel'),
   overlay:$('#overlay'), ovTitle:$('#ovTitle'), ovBody:$('#ovBody'), ovBtn:$('#ovBtn'),
   end:$('#end'), endTitle:$('#endTitle'), endLead:$('#endLead'), endStats:$('#endStats'), endReview:$('#endReview'), nextBtn:$('#nextBtn'), altBtn:$('#altBtn'), altBtn2:$('#altBtn2'), round:$('#round'), levels:$('#levels'),
-  words:$('#words'), saveWords:$('#saveWords'), resetWords:$('#resetWords'), copyWords:$('#copyWords'), wordsNote:$('#wordsNote'), wordsMsg:$('#wordsMsg'),
+  words:$('#words'), saveWords:$('#saveWords'), resetWords:$('#resetWords'), copyWords:$('#copyWords'), wordsNote:$('#wordsNote'), levelNote:$('#levelNote'), wordsMsg:$('#wordsMsg'),
   optStrict:$('#optStrict'), optTts:$('#optTts'), optStopMic:$('#optStopMic'), optSound:$('#optSound'), optShuffle:$('#optShuffle'), optHint:$('#optHint'), optPause:$('#optPause'), optRound:$('#optRound'), optLang:$('#optLang'),
 };
 const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -1194,12 +1197,13 @@ function beginRound(cards, label){
 function startRound(){
   reviewMode = false; roundStart = pos;
   const cards = order.slice(pos, pos + roundSize()).map(i => allCards[i]);
-  beginRound(cards, `${roundStart + 1}〜${roundStart + cards.length} / ${order.length}`);
+  beginRound(cards, `${levelLabel()} · ${roundStart + 1}〜${roundStart + cards.length} / ${order.length}`);
 }
 function startReview(){
   reviewMode = true; const ids = [...reviewSet]; if (settings.shuffle) shuffle(ids);
-  beginRound(ids.map(i => allCards[i]), `復習 ${ids.length} 語`);
+  beginRound(ids.map(i => allCards[i]), `${levelLabel()} · 復習 ${ids.length} 語`);
 }
+function levelLabel(){ const lv = LEVELS.find(l => l.id === settings.level); return lv ? lv.label : '自分の'; }
 function renderDeckTrack(){ el.deck.innerHTML = ''; for (let i = 0; i < roundCards.length; i++) { const s = document.createElement('span'); s.className = 'seg'; el.deck.appendChild(s); } }
 function markSeg(i, cls){ const s = el.deck.children[i]; if (s) s.className = 'seg ' + cls; }
 
@@ -1566,6 +1570,7 @@ function syncLevelUI(){
   el.words.value = wordsText; el.words.readOnly = !!lv;
   el.copyWords.hidden = !lv; el.saveWords.hidden = !!lv; el.resetWords.hidden = !!lv;
   el.wordsNote.textContent = lv ? `${lv.name}。組み込みのリストは編集できません。手を入れたいときは「自分のリストにコピーして編集」を押してください。` : '自分のリストです。書き換えて保存できます。';
+  el.levelNote.textContent = lv ? `${lv.name}。進み具合と要復習はレベルごとに覚えています。` : '自分のリストで遊びます。内容は下の「単語リスト」で編集できます。';
 }
 function setLevel(id){
   settings.level = (levelOf(id) || id === 'custom') ? id : 'hsk1'; saveSettings();
