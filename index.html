@@ -1237,11 +1237,18 @@ function showHint(level){
    ignores what it hears until the voice ends, so the recognizer is not restarted (and makes no start sound) per card. */
 function afterPause(ms, text){
   const willSpeak = settings.tts && ('speechSynthesis' in window);
+  if (willSpeak) keepAliveOn();
   if ((willSpeak && settings.stopMic) || (!isMobile && listening && Date.now() - sessionStart > 30000)) pauseRec();
   setTimeout(() => speak(text, () => { skipHeard(); resumeRec(); }), willSpeak && holdRestart ? 150 : 0);
   setTimeout(next, ms);
 }
-function skipHeard(){ if (lastSeen) seg = { index:lastSeen.index, offset:lastSeen.len }; }
+/* When the voice ends, drop only its echo from what the mic heard; anything the player said after it is judged now. */
+function skipHeard(){
+  if (!lastSeen) return;
+  const h = lastSeen.text || '', at = ttsText ? h.lastIndexOf(ttsText) : -1;
+  if (at >= 0) seg = { index:lastSeen.index, offset:Math.max(seg.index === lastSeen.index ? seg.offset : 0, at + ttsText.length) };
+  if (lastSeen.res) handleResult(lastSeen.index, lastSeen.res);
+}
 function matched(){
   busy = true; clearHints();
   const clean = wrongHere === 0 && revealed === 0;
@@ -1338,7 +1345,7 @@ function setStatus(k){ el.status.textContent = STATUS[k] || k; el.status.dataset
 function createRec(){
   rec = new SR();
   rec.lang = settings.lang; rec.continuous = true; rec.interimResults = true; rec.maxAlternatives = 5;
-  rec.onstart = () => { listening = true; everListened = true; errStreak = 0; sessionStart = Date.now(); seg = { index:-1, offset:0 }; lastSeen = null; setStatus('listening'); el.tones.classList.add('on'); startMeter(); };
+  rec.onstart = () => { clearTimeout(startWatch); listening = true; everListened = true; errStreak = 0; sessionStart = Date.now(); seg = { index:-1, offset:0 }; lastSeen = null; setStatus(ttsActive ? 'voice' : 'listening'); el.tones.classList.add('on'); startMeter(); };
   rec.onend = () => { listening = false; el.tones.classList.remove('on', 'speech', 'sound'); if (wantListen) { setStatus('reconnect'); if (!holdRestart) scheduleRestart(); } };
   rec.onsoundstart = () => el.tones.classList.add('sound');
   rec.onsoundend = () => el.tones.classList.remove('sound');
@@ -1358,15 +1365,28 @@ function createRec(){
   rec.onspeechend = () => el.tones.classList.remove('speech');
   rec.onresult = onResult;
 }
-function scheduleRestart(){ clearTimeout(restartTimer); const d = errStreak ? Math.min(300 * Math.pow(2, errStreak), 6000) : 30; restartTimer = setTimeout(startRec, d); }
+function scheduleRestart(){ clearTimeout(restartTimer); const d = errStreak ? Math.min(300 * Math.pow(2, errStreak), 6000) : 30; restartTimer = setTimeout(() => { restartTimer = null; startRec(); }, d); }
 /* Pause while the model pronunciation plays so the mic does not hear it, then resume for the next card. */
-function pauseRec(){ holdRestart = true; clearTimeout(restartTimer); if (rec && listening) { try { rec.abort(); } catch (e) {} } }
-function resumeRec(){ if (!holdRestart || ttsActive) return; holdRestart = false; if (wantListen && !listening) { setStatus('reconnect'); startRec(); } }
+function pauseRec(){
+  holdRestart = true; clearTimeout(restartTimer); restartTimer = null;
+  if (rec && listening) {
+    try { rec.abort(); } catch (e) {}
+    setTimeout(() => { if (listening && holdRestart) { listening = false; el.tones.classList.remove('on', 'speech', 'sound'); } }, 1500);   /* Safari sometimes never reports the end */
+  }
+}
+function resumeRec(){ if (!holdRestart || ttsPending) return; holdRestart = false; if (wantListen && !listening) { setStatus('reconnect'); startRec(); } }
+let startWatch = null;
 function startRec(){
   if (!wantListen || !rec || listening || holdRestart) return;
   try { startedAt = Date.now(); rec.start(); }
-  catch (e) { errStreak++; if (errStreak < 10) scheduleRestart(); }
+  catch (e) { errStreak++; if (errStreak < 10) scheduleRestart(); return; }
+  clearTimeout(startWatch);
+  /* A start that never reports back (seen on iPhone) is retried instead of leaving the game deaf. */
+  startWatch = setTimeout(() => {
+    if (!listening && wantListen && everListened && !holdRestart) { try { rec.abort(); } catch (e) {} errStreak++; scheduleRestart(); }
+  }, 4000);
 }
+setInterval(() => { if (wantListen && rec && !listening && !holdRestart && !restartTimer && Date.now() - startedAt > 5000) startRec(); }, 4000);
 function onResult(ev){
   const n = ev.results.length; if (!n) return;
   const from = Math.max(0, ev.resultIndex || 0);
@@ -1378,8 +1398,8 @@ function handleResult(i, res){
   if (!alts.length) return;
   const text = alts[0], isFinal = !!res.isFinal;
   if (i !== seg.index) seg = { index:i, offset:0 };
-  lastSeen = { index:i, len:han(text).length };
-  if (ttsActive) return;   /* what the mic hears now is the model voice */
+  lastSeen = { index:i, len:han(text).length, text:han(text), res };
+  if (ttsActive) return;   /* what the mic hears now is the model voice; skipHeard() revisits this result when it ends */
   showHeard(text, isFinal);
   if (ended) { for (const a of alts) { const c = matchCommand(han(a), END_CMDS); if (c) { doEndCommand(c.act); return; } } return; }
   if (busy || !card) return;
@@ -1413,7 +1433,8 @@ function showOverlay(kind){
 function retryFromOverlay(){
   hadGesture = true; el.overlay.hidden = true; errStreak = 0; ensureAudio(); unlockTts(); startKeepAlive();
   if (!rec) { if (!SR) return; createRec(); }
-  wantListen = true; setStatus('prep'); startRec();
+  wantListen = true; setStatus('prep');
+  setTimeout(startRec, 300);   /* let the audio unlocks settle before the mic opens (iPhone) */
 }
 el.ovBtn.addEventListener('click', e => { e.stopPropagation(); retryFromOverlay(); });
 el.overlay.addEventListener('click', () => { const k = el.overlay.dataset.kind; if (k === 'tap' || k === 'resume') retryFromOverlay(); });
@@ -1489,22 +1510,25 @@ function pickVoice(){
   /* Voices installed on the device keep working when the network voice service stalls. */
   return same.find(v => v.localService) || same[0] || zh.find(v => v.localService) || zh[0] || null;
 }
-let ttsActive = false;
+/* ttsPending: from the request until the voice is over. ttsActive: only while the voice is audibly playing,
+   which is the only time the mic must ignore what it hears. A voice that never starts costs no listening time. */
+let ttsPending = false, ttsActive = false, ttsText = '';
 function speak(text, cb){
-  let called = false; const done = () => { if (!called) { called = true; ttsActive = false; if (listening) setStatus('listening'); cb(); } };
+  let called = false;
+  const done = () => { if (called) return; called = true; ttsPending = false; ttsActive = false; if (listening && wantListen) setStatus('listening'); cb(); };
   if (!settings.tts || !('speechSynthesis' in window)) { done(); return; }
-  ttsActive = true; if (listening) setStatus('voice');
+  ttsPending = true; ttsText = han(text);
   /* Give up on a voice that never started or runs long, and silence it so the mic does not hear it later. */
   const finish = () => { if (called) return; try { speechSynthesis.cancel(); } catch (e) {} done(); };
   const go = () => {
     try {
       const u = new SpeechSynthesisUtterance(text); u.lang = settings.lang; const v = pickVoice(); if (v) u.voice = v; u.rate = 1;
       let started = false;
-      u.onstart = () => { started = true; };
+      u.onstart = () => { started = true; ttsActive = true; if (listening) setStatus('voice'); };
       u.onend = done; u.onerror = done;
       speechSynthesis.resume(); speechSynthesis.speak(u);
       setTimeout(() => { if (!started) finish(); }, 2000);
-      setTimeout(finish, Math.min(3000, 800 + 500 * Math.max(1, han(text).length)));
+      setTimeout(finish, Math.min(3000, 800 + 500 * Math.max(1, ttsText.length)));
     } catch (e) { done(); }
   };
   try {
@@ -1532,9 +1556,11 @@ function startKeepAlive(){
     for (let i = 0; i < n; i++) v.setUint8(44 + i, 128);   /* one second of digital silence */
     const a = new Audio(URL.createObjectURL(new Blob([buf], { type:'audio/wav' })));
     a.loop = true; a.setAttribute('playsinline', ''); keepAlive = a;
-    a.play().catch(() => { keepAlive = null; });
+    /* The tap only unlocks the element; the loop starts later, once the mic is already running, so the two never race. */
+    a.play().then(() => a.pause()).catch(() => { keepAlive = null; });
   } catch (e) { keepAlive = null; }
 }
+function keepAliveOn(){ if (keepAlive && keepAlive.paused) keepAlive.play().catch(() => {}); }
 window.addEventListener('pointerdown', () => { hadGesture = true; ensureAudio(); }, { passive:true });
 window.addEventListener('keydown', () => { hadGesture = true; ensureAudio(); unlockTts(); });
 window.addEventListener('click', () => { ensureAudio(); unlockTts(); startKeepAlive(); });
@@ -1631,7 +1657,7 @@ window.zhcards = {
     const results = []; results[index] = r;
     onResult({ results, resultIndex:index });
   },
-  state(){ return { idx, ja: card && card.ja, alts: card && card.alts, busy, ended, seg, okCount, ngCount, wrongHere, revealed, listening, pinyin: !!PP(), pos, roundStart, orderLen: order.length, roundLen: roundCards.length, reviewMode, review: [...reviewSet], ttsActive, holdRestart, level: settings.level, allLen: allCards.length }; },
+  state(){ return { idx, ja: card && card.ja, alts: card && card.alts, busy, ended, seg, okCount, ngCount, wrongHere, revealed, listening, pinyin: !!PP(), pos, roundStart, orderLen: order.length, roundLen: roundCards.length, reviewMode, review: [...reviewSet], ttsActive, ttsPending, holdRestart, level: settings.level, allLen: allCards.length }; },
 };
 })();
 </script>
